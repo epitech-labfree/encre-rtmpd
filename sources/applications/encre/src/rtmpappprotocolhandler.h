@@ -32,12 +32,15 @@
 #define	_RTMPAPPPROTOCOLHANDLER_H
 
 #include "protocols/rtmp/basertmpappprotocolhandler.h"
+#include "encreapplication.h"
 namespace app_encre {
 
   class RTMPAppProtocolHandler : public BaseRTMPAppProtocolHandler {
   public:
     RTMPAppProtocolHandler(Variant &configuration);
     virtual ~RTMPAppProtocolHandler();
+
+    EncreApplication    &encre();
 
     virtual bool        AuthenticateInbound(BaseRTMPProtocol *pFrom, Variant &request,
                                             Variant &authState);

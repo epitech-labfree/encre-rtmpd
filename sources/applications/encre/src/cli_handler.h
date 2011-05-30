@@ -27,6 +27,7 @@
 # define   	CLI_HANDLER_H_
 
 #include "protocols/cli/basecliappprotocolhandler.h"
+#include "encreapplication.h"
 
 namespace app_encre
 {
@@ -38,6 +39,20 @@ class CLIAppProtocolHandler : public BaseCLIAppProtocolHandler
   virtual ~CLIAppProtocolHandler();
 
   virtual bool ProcessMessage(BaseProtocol *pFrom, Variant &message);
+
+  EncreApplication &encre();
+
+ protected:
+  bool ProcessInvokeCommand(BaseProtocol *pFrom, Variant &message);
+  bool ProcessInvokeUserNew(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeStreamNew(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeStreamDel(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeStreamMute(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeStreamRecord(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeStreamWatcherNew(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeStreamWatcherDel(BaseProtocol *pFrom, Variant &command);
+
 };
 }
 

@@ -31,6 +31,7 @@
 #define _ENCREAPPLICATION_H
 
 #include "application/baseclientapplication.h"
+#include "users.h"
 
 namespace app_encre
 {
@@ -52,10 +53,17 @@ namespace app_encre
 #ifdef HAS_PROTOCOL_CLI
     CLIAppProtocolHandler *_pCLIHandler;
 #endif /* HAS_PROTOCOL_CLI */
+
+    user_map                    m_users;
+    stream_map                  m_streams;
+
   public:
     EncreApplication(Variant &configuration);
     virtual ~EncreApplication();
     virtual bool Initialize();
+
+    user_map                    &users();
+    stream_map                  &streams();
   };
 }
 

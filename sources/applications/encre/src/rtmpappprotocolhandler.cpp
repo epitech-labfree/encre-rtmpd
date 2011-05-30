@@ -30,22 +30,71 @@ RTMPAppProtocolHandler::RTMPAppProtocolHandler(Variant &configuration)
 RTMPAppProtocolHandler::~RTMPAppProtocolHandler() {
 }
 
-virtual bool        RTMPAppProtocolHandler::AuthenticateInbound(BaseRTMPProtocol *pFrom, Variant &request,
-                                                                Variant &authState)
+EncreApplication &RTMPAppProtocolHandler::encre()
 {
+  return *dynamic_cast<EncreApplication *>(GetApplication());
 }
 
-virtual bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom, Variant &request)
+
+bool        RTMPAppProtocolHandler::AuthenticateInbound(BaseRTMPProtocol *pFrom, Variant &request,
+                                                        Variant &authState)
 {
+  FINEST("AuthenticateInbound");
+
+  return true;
 }
 
-virtual bool        RTMPAppProtocolHandler::ProcessInvokeCreateStream(BaseRTMPProtocol *pFrom,
-                                                                      Variant &request)
+bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom, Variant &request)
 {
+  std::string uid, sid;
+  Variant params = request["invoke"]["parameters"];
+
+  if (!(BaseRTMPAppProtocolHandler::ProcessInvokeConnect(pFrom, request)
+        &&params.HasKey("__index__value__1")
+        && params["__index__value__1"].HasKey("__index__value__0")
+        && params["__index__value__1"].HasKey("__index__value__1")))
+  {
+    WARN("ProcessInvokeConnect: Wrong number of parameters");
+    // FIXME The nice way ??
+    pFrom->GracefullyEnqueueForDelete();
+    return false;
+  }
+
+  uid = STR(params["__index__value__1"]["__index__value__0"]);
+  sid = STR(params["__index__value__1"]["__index__value__1"]);
+
+  FINEST("ProcessInvokeConnect (uid, sid) = (%s, %s)", STR(uid), STR(sid));
+
+  if (encre().users().exists(uid) && encre().users()[uid].properties()["sid"] == sid)
+  {
+    FINEST("User authenticated");
+    return true;
+  }
+  else
+  {
+    FINEST("User isn't allowed to connect (yet)");
+    pFrom->GracefullyEnqueueForDelete();
+    return false;
+  }
 }
 
-virtual bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
-                                                                 Variant &request)
+bool        RTMPAppProtocolHandler::ProcessInvokeCreateStream(BaseRTMPProtocol *pFrom,
+                                                              Variant &request)
 {
+  BaseRTMPAppProtocolHandler::ProcessInvokeCreateStream(pFrom, request);
+
+  FINEST("ProcessInvokeCreateStream");
+
+  return true;
+}
+
+bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
+                                                         Variant &request)
+{
+  BaseRTMPAppProtocolHandler::ProcessInvokePublish(pFrom, request);
+
+  FINEST("ProcessInvokePublish: \n%s", STR(request.ToString("", 1)));
+
+  return true;
 }
 

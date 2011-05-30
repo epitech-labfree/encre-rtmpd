@@ -1,0 +1,82 @@
+# RTMPD <-> Ucengine connector JSON API.
+
+## Introduction
+
+This document briefly describes the format and meaning of the event
+exchanged between the UCEngine Ruby connector and the rtmpd
+application.
+
+The protocol exchanges newline (i.e. "\n") separated JSON messages
+over a simple TCP connection. There's no authentication mechanism
+(yet) between the connector and the rtmpd application, the socket is
+only listening on 127.0.0.1 as the sole security mechanism.
+
+### Terminology
+
+"the app" -> the rtmpd encre application.
+"the connector" -> the ruby rtmpd <-> ucengine connector
+
+## Basic format
+
+{ "cmd" : "cmd.name", "param1" : "param1_value", "param2" : "param2_value", ...}
+
+The supported commands are the following ones :
+ * user.new : Create this user in the app
+ * user.del : Delete this user in the app
+ * stream.new : allow some user to publish a stream
+ * stream.del : remove a publish right
+ * stream.mute : set mute state of audio/video part of a stream.
+ * stream.record : start the recording of the given stream
+ * stream.watcher.new : allows a user to watch this stream
+ * stream.watcher.del : disallows a user to watch this stream
+
+## Commands
+
+### user.new
+
+ * uid : The UCEngine user id of the user.
+ * sid : The UCEngine user session id of the user.
+
+### user.del
+
+ * uid : The UCEngine user id of the user.
+
+### stream.new
+
+ * uid : The user which is allowed to publish a stream
+ * stream : the stream name.
+
+### stream.del
+
+ * uid : The user which is allowed to publish a stream
+ * stream : the stream name.
+
+### stream.mute
+
+This feature is not currently supported by rtmpd and will be
+implemented after all of the other commands are supported and tested.
+
+ * uid : The UCEngine user id of the user.
+ * stream : the stream name.
+ * audio : [bool] Should the audio be streamed.
+ * video : [bool] Should the video be streamed.
+
+### stream.record
+
+ * uid : The UCEngine user id of the user.
+ * stream : the stream which is to be recorded
+
+### stream.watcher.new
+
+ * uid : The UCEngine user id of the stream owner.
+ * stream : the stream name.
+ * watcher_uid : the uid of the user which is to be added to the authorized watcher list.
+
+### stream.watcher.del
+
+ * uid : The UCEngine user id of the stream owner.
+ * stream : the stream name.
+ * watcher_uid : the uid of the user which is to be removed to the authorized watcher list.
+
+
+

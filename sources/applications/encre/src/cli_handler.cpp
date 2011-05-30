@@ -28,25 +28,143 @@
 #ifdef HAS_PROTOCOL_CLI
 # include "cli_handler.h"
 
-namespace app_encre
+using namespace app_encre;
+
+CLIAppProtocolHandler::CLIAppProtocolHandler(Variant &configuration)
+  : BaseCLIAppProtocolHandler(configuration)
 {
 
-  CLIAppProtocolHandler::CLIAppProtocolHandler(Variant &configuration)
-    : BaseCLIAppProtocolHandler(configuration)
-  {
+}
 
+EncreApplication &CLIAppProtocolHandler::encre()
+{
+  return *dynamic_cast<EncreApplication *>(GetApplication());
+}
+
+CLIAppProtocolHandler::~CLIAppProtocolHandler()
+{
+}
+
+bool CLIAppProtocolHandler::ProcessMessage(BaseProtocol *pFrom, Variant &message)
+{
+  Variant cmd;
+  std::string json = message["command"];
+  uint32_t wtf = 0;
+
+  Variant::DeserializeFromJSON(json, cmd, wtf);
+
+  FINEST("Encre: Received JsonCLI message %s\n%s", STR(json), STR(cmd.ToString()));
+
+  if (ProcessInvokeCommand(pFrom, cmd))
+  {
+    SendSuccess(pFrom, "{\"result\":\"ok\"}", cmd);
+    return true;
   }
-
-  CLIAppProtocolHandler::~CLIAppProtocolHandler()
+  else
   {
-  }
-
-  bool CLIAppProtocolHandler::ProcessMessage(BaseProtocol *pFrom, Variant &message)
-  {
-    FINEST("Encre: Received JsonCLI message %s", message.ToString().c_str());
-    return SendFail(pFrom, "Not yet implemented");
+    SendFail(pFrom, "{\"result\":\"nok\"}");
+    return false;
   }
 }
+
+bool CLIAppProtocolHandler::ProcessInvokeCommand(BaseProtocol *pFrom, Variant &command)
+{
+  string cmd = STR(command["command"]);
+
+  FINEST("ProcessInvokeCommand %s:\n%s", STR(cmd), STR(command.ToString("", 1)));
+
+  if (cmd == "user.new")
+    return ProcessInvokeUserNew(pFrom, command);
+  else if (cmd == "user.del")
+    return ProcessInvokeUserDel(pFrom, command);
+  else if (cmd == "stream.new")
+    return ProcessInvokeStreamNew(pFrom, command);
+  else if (cmd == "stream.del")
+    return ProcessInvokeStreamDel(pFrom, command);
+  else if (cmd == "stream.mute")
+    return ProcessInvokeStreamMute(pFrom, command);
+  else if (cmd == "stream.record")
+    return ProcessInvokeStreamRecord(pFrom, command);
+  else if (cmd == "stream.watcher.new")
+    return ProcessInvokeStreamWatcherNew(pFrom, command);
+  else if (cmd == "stream.watcher.del")
+    return ProcessInvokeStreamWatcherDel(pFrom, command);
+  else
+    return false;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeUserNew(BaseProtocol *pFrom, Variant &command)
+{
+  if (!(command.HasKey("uid") && command.HasKey("sid")))
+  {
+    FINEST("Missing parameter");
+    return false;
+  }
+  if (encre().users().find(command["uid"]) != encre().users().end())
+  {
+    FINEST("User already exists.");
+    return true;
+  }
+
+  user new_user(command["uid"], command["sid"]);
+  encre().users()[command["uid"]] = new_user;
+
+  FINEST("Creating new user");
+
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &command)
+{
+  if (!command.HasKey("uid"))
+  {
+    FINEST("Missing parameter");
+    return false;
+  }
+  if (encre().users().find(command["uid"]) == encre().users().end())
+  {
+    FINEST("User doesn't exist.");
+    return false;
+  }
+
+  encre().users().erase(command["uid"]);
+  FINEST("Deleting a user");
+
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeStreamNew(BaseProtocol *pFrom, Variant &command)
+{
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeStreamDel(BaseProtocol *pFrom, Variant &command)
+{
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeStreamMute(BaseProtocol *pFrom, Variant &command)
+{
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeStreamRecord(BaseProtocol *pFrom, Variant &command)
+{
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeStreamWatcherNew(BaseProtocol *pFrom, Variant &command)
+{
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeStreamWatcherDel(BaseProtocol *pFrom, Variant &command)
+{
+  return true;
+}
+
+
+
 
 #endif  /* HAS_PROTOCOL_CLI */
 

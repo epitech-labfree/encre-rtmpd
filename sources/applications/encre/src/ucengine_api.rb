@@ -1,0 +1,402 @@
+##
+## encre_auth.rb
+## Login : <elthariel@rincevent>
+## Started on  Thu Jun 17 12:10:03 2010 elthariel
+## $Id$
+##
+## Author(s):
+##  - Julien BALLET <j.ballet@labfree.org>
+##
+## Copyright (C) 2010 Epitech
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+##
+
+require 'rubygems'
+require 'rest_client'
+require 'json'
+require 'logger'
+
+
+class Hash
+  def __context_to_string(c)
+    res = c.shift.to_s
+    c.each { |e| res += "[#{e}]" }
+    res
+  end
+
+  def __url_map(h, context = [])
+    res = []
+    h.each do |k, v|
+      c = context.dup << k
+      if v.is_a? Hash
+        res << __url_map(v, c)
+      elsif v.respond_to? :to_s
+        res << "#{__context_to_string c}=#{v}"
+      end
+    end
+    res
+  end
+
+  def url_encode
+    __url_map(self).join("&")
+  end
+end
+
+module UCE_Impl
+  module UCE_03
+    VERSION = "0.3"
+    def uri
+      if prefix.respond_to? :length and prefix.length > 0
+        "#{method}://#{server}:#{port}/#{prefix}/api/0.3/"
+      else
+        "#{method}://#{server}:#{port}/api/0.3"
+      end
+    end
+
+    def connect
+      logger.info "Uce #{VERSION}: Connecting #{uid} on #{uri}"
+
+      r = post "#{uri}/presence/?uid=#{uid}&credential=#{token}"
+
+      @conf[:sid] = r['result'] if r and r.has_key? 'result'
+
+      logger.info "Uce #{VERSION}: Connection success" if connected?
+      logger.warn "Uce #{VERSION}: Connection failure: #{r}" unless connected?
+
+      connected?
+    end
+
+    def connected?
+      sid
+    end
+
+protected
+    def post(uri, data = "")
+      begin
+        r = RestClient.post(uri, data)
+        JSON.parse(r.to_str)
+      rescue
+        nil
+      end
+    end
+
+    def get(uri)
+      begin
+        r = RestClient.get(uri, data)
+        JSON.parse(r.to_str)
+      rescue
+        nil
+      end
+    end
+  end
+end
+
+class UCEngine
+  [:server, :port, :uid, :token, :method, :prefix, :version, :sid, :logger].each do |e|
+    eval "def #{e}()
+            nil
+            @conf[:#{e}] if @conf.has_key? :#{e}
+          end"
+  end
+
+  def initialize(opts = {})
+    @conf = {:server => 'localhost',
+      :port => 5280,
+      :uid => 'encre-video',
+      :token => 'a-damn-token',
+      :method => 'http',
+      :version => '0.3'}.merge opts
+
+    # Allow for RestClient based debug
+    RestClient.log = logger if @conf.has_key? :logger
+
+    # Mixin concrete api implementation
+    imp_name = "UCE_#{version.delete '.'}".to_sym
+    extend UCE_Impl.const_get imp_name
+
+    connect
+  end
+end
+
+# module Encre
+#   class Conf
+#     attr_accessor :server, :port, :uid, :token, :method, :prefix, :sid
+#     def initialize(options)
+#       @server = options[:server]
+#       @port = options[:port]
+#       @method = options[:method]
+#       @prefix = options[:prefix]
+#       @token = options[:token]
+#       @uid = options[:uid]
+#     end
+
+#   end
+
+#   class Platform
+#     attr_reader :auth, :event, :conf, :file
+
+#     def self.connect(o = {})
+#       options = {:server => 'localpwet', :port => 4657, :method => 'http', :prefix => ''}.merge o
+#       conf = Encre::Conf.new(options)
+#       Encre::Platform.new(conf)
+#     end
+
+#     protected
+#     def initialize(conf)
+#       @conf = conf
+#       @auth = Encre::Auth.new(@conf)
+#       @event = Encre::Event.new(@conf)
+#       # @file = Encre::File.new(@conf)
+#     end
+#   end
+
+#   class Event
+#     def initialize(conf)
+#       @conf = conf
+#       @url = "#{@conf.method}://#{@conf.server}:#{@conf.port}#{@conf.prefix}"
+#     end
+
+#     # file upload, should be in different class File
+#     def file_upload(file)
+#       file["//"] = "/"
+#       file = ENV['RED5_HOME'] + "/webapps/encrev1/#{file}"
+#       request_url = "#{@url}/file/demo"
+#       request_url += "?uid=#{@conf.uid}&sid=#{@conf.sid}"
+#       $log.info "Request filename : #{request_url}"
+#       response = RestClient.put request_url, ""
+#       $log.info "--> Got reponse : #{response}"
+#       file_name = JSON.parse(response.to_str)['result']
+#       if file_name
+#         $log.info "--> Got filename : #{file_name}"
+#         request_url = "#{@url}/file/demo/"
+#         request_url += file_name
+#         request_url += "?uid=#{@conf.uid}&sid=#{@conf.sid}"
+#         $log.info "Upload (#{file}) to Encre : #{request_url}"
+#         response = RestClient.put request_url, File.read(file), :content_type => 'application/x-shockwave-flash'
+#         $log.info "Delete #{file} ..."
+#         file = File.delete(file)
+#       else
+#         file_name = nil
+#       end
+#     rescue
+#       file_name = nil
+#       $log.info "... failed ! (check exception below)"
+#       $log.info $!
+#     end
+
+
+
+#     # def event(euid, token, type, metadatas = {} , id = "", eventlink = "")
+#     # The event must have been validated by the encre platform server before pushing it (isvalid?)
+#     def event(event)
+#       ## check acl ?
+#       e = { :type => "" }
+#       e.merge! event
+
+#       request_url = "#{@url}/event/#{event[:room]}?"
+#       request_url += "uid=#{@conf.uid}&sid=#{@conf.sid}"
+#       request_url += "&" + e.url_encode
+#       $log.info "Sending an event to encre: #{request_url}"
+#       response = RestClient.post request_url, ""
+#       $log.info "--> Got response : #{response}"
+
+#       # The doc doesn't mention any error code or return value from this method
+#       true
+#     end
+
+#     def event_stream(stream, type, who = nil)
+#       client = stream.get_provider.get_connection.get_client
+#       if client.has_attribute('user_uid') && client.has_attribute('user_sid')
+#         conn = Java::OrgRed5ServerApi::Red5::get_connection_local
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+#         $log.info "Event stream : type -> #{type} user uid -> #{user_uid} and sid -> #{user_sid}"
+#         event(:type => type,
+#               :user_uid => user_uid,
+#               :user_sid => user_sid,
+#               :path => stream.get_scope.get_path,
+#               :room => stream.get_scope.get_name,
+#               :name => stream.get_published_name )
+#       else
+#         return false
+#       end
+#     end
+
+#     def stream_watched(stream)
+#       event_stream(stream, 'videochat_streamwatched_event')
+#     end
+
+#     def stream_unwatched(stream)
+#       event_stream(stream, 'videochat_streamunwatched_event')
+#     end
+
+#     def stream_started(stream)
+#       event_stream(stream, 'videochat_streamstarted_event')
+#     end
+
+#     def stream_stopped(stream)
+#       event_stream(stream, 'videochat_streamstopped_event')
+#     end
+
+#     def server_connect(conn)
+#       $log.debug "Server connect event"
+#       if conn.get_client.has_attribute('user_sid') && conn.get_client.has_attribute('user_sid')
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+#         $log.info "user uid -> #{user_uid} and sid -> #{user_sid}"
+#         event(:type => 'videochat_serverconnect_event', :user_uid => user_uid, :user_sid => user_sid)
+#       else
+#         return false
+#       end
+#     end
+
+#     def server_disconnect(conn)
+#       if conn.get_client.has_attribute('user_uid') && conn.get_client.has_attribute('user_sid')
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+
+#         event(:type => 'videochat_serverdisconnect_event', :user_uid => user_uid, :user_sid => user_sid)
+#       else
+#         return false
+#       end
+#     end
+
+#     def room_join(client, scope)
+#       conn = Java::OrgRed5ServerApi::Red5::get_connection_local
+#       if conn.get_client.has_attribute('user_uid') && conn.get_client.has_attribute('user_sid')
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+
+#         event(:type => 'videochat_roomjoin_event',
+#               :user_uid => user_uid, :user_sid => user_sid,
+#               :path => scope.get_path, :room => scope.get_name)
+#       else
+#         return false
+#       end
+#     end
+
+#     def room_leave(client, scope)
+#       conn = Java::OrgRed5ServerApi::Red5::get_connection_local
+#       if conn.get_client.has_attribute('user_uid') && conn.get_client.has_attribute('user_sid')
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+
+#         event(:type => 'videochat_roomleave_event',
+#               :user_uid => user_uid, :user_sid => user_sid,
+#               :path => scope.get_path, :room => scope.get_name)
+#       else
+#         return false
+#       end
+#     end
+#   end
+
+#   class Auth
+#     def initialize(conf)
+#       @conf = conf
+#       @url = "#{@conf.method}://#{@conf.server}:#{@conf.port}#{@conf.prefix}"
+#     end
+
+#     def server(scope)
+#       $log.info "Authorizing from ENCRE server (#{scope.get_path}) on #{@url}/presence/#{@conf.uid} ..."
+#       $log.info "With uid : [#{@conf.uid}] and token : [#{@conf.token}]."
+#       begin
+#         r = RestClient.post("#{@url}/presence?uid=#{@conf.uid}&credential=#{@conf.token}", '')
+#         @conf.sid = JSON.parse(r.to_str)['result']
+#         if @conf.sid
+#           $log.info "... Authorizarion sid is #{@conf.sid}"
+#         else
+#           @conf.sid = nil
+#         end
+#       rescue
+#         @conf.sid = nil
+#         $log.info "... failed ! (check exception below)"
+#         $log.info $!
+#       end
+#       @conf.sid
+#     end
+
+#     def auth(user, event_type, scope)
+#       $log.info "Checking user uid : [#{user[:uid]}] sid : [#{user[:sid]}]"
+#       request = "#{@url}/user/#{user[:uid]}"
+#       request += "?uid=#{user[:uid]}"
+#       request += "&sid=#{user[:sid]}"
+#       $log.info "Executing this request : #{request}"
+#       response = RestClient.get request
+#       $log.info "--> Got response: #{response}"
+#       return false if JSON.parse(response.to_str).has_key? 'error'
+#       true
+#     rescue => error
+#       $log.info "Request error : #{error.response}"
+#       false
+#     end
+
+#     def connection(conn, user)
+#       ## get /info
+#       $log.debug " Getting uid #{user[:uid]} and sid #{user[:sid]}"
+#       conn.get_client.set_attribute('user_uid', user[:uid])
+#       conn.get_client.set_attribute('user_sid', user[:sid])
+#       auth(user, 'videochat_connect', '')
+#     end
+
+#     def join(client, scope)
+#       ## if user in scope[roster] check acl
+#       conn = Java::OrgRed5ServerApi::Red5::get_connection_local
+#       if conn.get_client.has_attribute('user_uid') && conn.get_client.has_attribute('user_sid')
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+#       return auth(user = {:uid => user_uid, :sid => user_sid }, 'videochat_join', scope.get_name)
+#       end
+#     end
+
+#     def stream_auth(scope, name, type)
+#       # check scope
+#       # FIXME Check from threading issues.
+#       conn = Java::OrgRed5ServerApi::Red5::get_connection_local
+#       if conn.get_client.has_attribute('user_uid') && conn.get_client.has_attribute('user_sid')
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+
+#         auth(user = {:uid => user_uid, :sid => user_sid }, type, scope.get_name)
+#       else
+#         return false
+#       end
+#     end
+
+#     def stream_publish(scope, name, mode)
+#             # check scope
+#       stream_auth scope, name, 'videochat_streamstarted'
+#     end
+
+#     def stream_watch(scope, name, start, length, flush)
+#             # check scope
+#       stream_auth scope, name, 'videochat_streamwatched'
+#     end
+
+#     def stream_record(stream)
+#       # a revoir
+#       # FIXME Check from threading issues.
+#       conn = Java::OrgRed5ServerApi::Red5::get_connection_local
+#       if conn.get_client.has_attribute('user_uid') && conn.get_client.has_attribute('user_sid')
+#         user_uid = conn.get_client.get_attribute('user_uid').to_s
+#         user_sid = conn.get_client.get_attribute('user_sid').to_s
+
+#         auth(user = {:uid => user_uid, :sid => user_sid }, 'videochat_streamrecorded', stream.get_scope.get_name)
+#       else
+#         return false
+#       end
+#     end
+#   end
+# end
+

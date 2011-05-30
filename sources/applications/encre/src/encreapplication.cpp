@@ -83,3 +83,13 @@ bool EncreApplication::Initialize()
   return true;
 }
 
+user_map &EncreApplication::users()
+{
+  return m_users;
+}
+
+stream_map &EncreApplication::streams()
+{
+  return m_streams;
+}
+
