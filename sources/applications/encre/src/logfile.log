@@ -1,0 +1,3 @@
+# Logfile created on 2011-05-25 14:01:37 +0200 by logger.rb/25413
+W, [2011-05-25T14:02:54.625359 #21631]  WARN -- : Encre rtmpd <-> ucengine connector starting up ...
+I, [2011-05-25T14:02:54.625511 #21631]  INFO -- : Configuration hash is: {:server=>"localhost", :port=>5280, :method=>"http", :prefix=>"/api/0.3", :uid=>"encre-video", :token=>123456, :logger=>"logfile.log", :loglvl=>"DEBUG"}

@@ -80,7 +80,7 @@ bool BaseMediaDocument::Process() {
 
 	GETCLOCKS(endTime);
 
-	INFO("%zu frames computed in %.2f seconds at a speed of %.2f FPS",
+	INFO("%"PRIz"u frames computed in %.2f seconds at a speed of %.2f FPS",
 			_frames.size(),
 			(endTime - startTime) / (double) CLOCKS_PER_SECOND,
 			(double) _frames.size() / ((endTime - startTime) / (double) CLOCKS_PER_SECOND));
@@ -132,6 +132,21 @@ bool BaseMediaDocument::SaveSeekFile() {
 		FATAL("Unable to open seeking file %s", STR(_seekFilePath));
 		return false;
 	}
+	
+	//2. Serialize the stream capabilities
+	IOBuffer raw;
+	if (!_streamCapabilities.Serialize(raw)) {
+		FATAL("Unable to serialize stream capabilities");
+		return false;
+	}
+	if (!seekFile.WriteUI32(GETAVAILABLEBYTESCOUNT(raw), false)) {
+		FATAL("Unable to serialize stream capabilities");
+		return false;
+	}
+	if (!seekFile.WriteBuffer(GETIBPOINTER(raw), GETAVAILABLEBYTESCOUNT(raw))) {
+		FATAL("Unable to serialize stream capabilities");
+		return false;
+	}
 
 	//2. Write the number of frames
 	uint32_t framesCount = _frames.size();
@@ -147,7 +162,7 @@ bool BaseMediaDocument::SaveSeekFile() {
 	FOR_VECTOR(_frames, i) {
 		MediaFrame frame = _frames[i];
 		if (maxFrameSize < frame.length) {
-			WARN("maxFrameSize bumped up: %"PRIu64" -> %"PRIu64, maxFrameSize, frame.length);
+			//WARN("maxFrameSize bumped up: %"PRIu64" -> %"PRIu64, maxFrameSize, frame.length);
 			maxFrameSize = frame.length;
 		}
 		hasVideo |= (frame.type == MEDIAFRAME_TYPE_VIDEO);

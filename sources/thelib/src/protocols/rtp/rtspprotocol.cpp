@@ -32,6 +32,7 @@
 #include "netio/netio.h"
 #include "protocols/rtp/connectivity/outboundconnectivity.h"
 #include "protocols/rtp/connectivity/inboundconnectivity.h"
+#include "protocols/protocolmanager.h"
 
 #define RTSP_STATE_HEADERS 0
 #define RTSP_STATE_PAYLOAD 1
@@ -39,6 +40,28 @@
 #define RTSP_MAX_HEADERS_COUNT 64
 #define RTSP_MAX_HEADERS_SIZE 2048
 #define RTSP_MAX_CHUNK_SIZE 1024*128
+
+RTSPProtocol::RTSPKeepAliveTimer::RTSPKeepAliveTimer(uint32_t protocolId)
+: BaseTimerProtocol() {
+	_protocolId = protocolId;
+}
+
+RTSPProtocol::RTSPKeepAliveTimer::~RTSPKeepAliveTimer() {
+
+}
+
+bool RTSPProtocol::RTSPKeepAliveTimer::TimePeriodElapsed() {
+	RTSPProtocol *pProtocol = (RTSPProtocol *) ProtocolManager::GetProtocol(_protocolId);
+	if (pProtocol == NULL) {
+		FATAL("Unable to get parent protocol");
+		return false;
+	}
+	if (!pProtocol->SendKeepAliveOptions()) {
+		FATAL("Unable to send keep alive options");
+		return false;
+	}
+	return true;
+}
 
 RTSPProtocol::RTSPProtocol()
 : BaseProtocol(PT_RTSP) {
@@ -50,11 +73,16 @@ RTSPProtocol::RTSPProtocol()
 	_requestSequence = 0;
 	_pOutboundConnectivity = NULL;
 	_pInboundConnectivity = NULL;
+	_basicAuthentication = "";
+	_keepAliveTimerId = 0;
 }
 
 RTSPProtocol::~RTSPProtocol() {
 	CloseOutboundConnectivity();
 	CloseInboundConnectivity();
+	if (ProtocolManager::GetProtocol(_keepAliveTimerId) != NULL) {
+		ProtocolManager::GetProtocol(_keepAliveTimerId)->EnqueueForDelete();
+	}
 }
 
 IOBuffer * RTSPProtocol::GetOutputBuffer() {
@@ -108,6 +136,29 @@ void RTSPProtocol::GetStats(Variant &info) {
 			info["streams"].PushToArray(si);
 		}
 	}
+}
+
+void RTSPProtocol::SetBasicAuthentication(string userName, string password) {
+	_basicAuthentication = format("Basic %s", STR(b64(format("%s:%s", STR(userName), STR(password)))));
+}
+
+bool RTSPProtocol::EnableKeepAlive(uint32_t period) {
+	RTSPKeepAliveTimer *pTimer = new RTSPKeepAliveTimer(GetId());
+	_keepAliveTimerId = pTimer->GetId();
+	return pTimer->EnqueueForTimeEvent(period);
+}
+
+bool RTSPProtocol::SendKeepAliveOptions() {
+	PushRequestFirstLine(RTSP_METHOD_OPTIONS, "*", RTSP_VERSION_1_0);
+	if (GetCustomParameters().HasKey(RTSP_HEADERS_SESSION)) {
+		PushResponseHeader(RTSP_HEADERS_SESSION,
+				GetCustomParameters()[RTSP_HEADERS_SESSION]);
+	}
+	return SendRequestMessage();
+}
+
+bool RTSPProtocol::HasInboundConnectivity() {
+	return (_pInboundConnectivity != NULL);
 }
 
 SDP &RTSPProtocol::GetInboundSDP() {
@@ -192,6 +243,11 @@ bool RTSPProtocol::SendRequestMessage() {
 
 	//2. Put our request sequence in place
 	_requestHeaders[RTSP_HEADERS][RTSP_HEADERS_CSEQ] = format("%u", ++_requestSequence);
+
+	//3. Put authentication if necessary
+	if (_basicAuthentication != "") {
+		_requestHeaders[RTSP_HEADERS][RTSP_HEADERS_AUTHORIZATION] = _basicAuthentication;
+	}
 
 	//3. send the mesage
 	return SendMessage(_requestHeaders, _requestContent);
@@ -339,7 +395,7 @@ bool RTSPProtocol::SendMessage(Variant &headers, string &content) {
 
 	//2. Add the content length if required
 	if (content.size() > 0) {
-		headers[RTSP_HEADERS][RTSP_HEADERS_CONTENT_LENGTH] = format("%zu", content.size());
+		headers[RTSP_HEADERS][RTSP_HEADERS_CONTENT_LENGTH] = format("%"PRIz"u", content.size());
 	}
 
 	//3. Write the headers
@@ -463,15 +519,23 @@ bool RTSPProtocol::ParseNormalHeaders(IOBuffer &buffer) {
 	_inboundHeaders[RTSP_HEADERS].IsArray(false);
 	for (uint32_t i = 1; i < lines.size(); i++) {
 		string line = lines[i];
-		string::size_type splitterPos = line.find(": ");
+		string splitter = ": ";
+		string::size_type splitterPos = line.find(splitter);
 
 		if ((splitterPos == string::npos)
 				|| (splitterPos == 0)
-				|| (splitterPos == line.size() - 2)) {
-			WARN("Invalid header line: %s", STR(line));
-			continue;
+				|| (splitterPos == line.size() - splitter.length())) {
+			splitter = ":";
+			splitterPos = line.find(splitter);
+			if ((splitterPos == string::npos)
+					|| (splitterPos == 0)
+					|| (splitterPos == line.size() - splitter.length())) {
+				WARN("Invalid header line: %s", STR(line));
+				continue;
+			}
 		}
-		_inboundHeaders[RTSP_HEADERS][line.substr(0, splitterPos)] = line.substr(splitterPos + 2, string::npos);
+		_inboundHeaders[RTSP_HEADERS][line.substr(0, splitterPos)] =
+				line.substr(splitterPos + splitter.length(), string::npos);
 	}
 
 	//6. default a transfer type to Content-Length: 0 if necessary
@@ -566,7 +630,7 @@ bool RTSPProtocol::HandleRTSPMessage(IOBuffer &buffer) {
 		_inboundContent += string((char *) GETIBPOINTER(buffer), chunkLength);
 		buffer.Ignore(chunkLength);
 		if (_inboundContent.size() < _contentLength) {
-			FINEST("Not enough data. Wanted: %u; got: %zu", _contentLength, _inboundContent.size());
+			FINEST("Not enough data. Wanted: %u; got: %"PRIz"u", _contentLength, _inboundContent.size());
 			return true;
 		}
 	}

@@ -303,10 +303,14 @@ void PrintVersion() {
 void NormalizeCommandLine(string configFile) {
 	gRs.commandLine["arguments"]["configFile"] = configFile;
 	gRs.commandLine["arguments"].RemoveKey(configFile);
-	gRs.commandLine["arguments"]["--help"] = (bool)gRs.commandLine["arguments"].HasKey("--help");
-	gRs.commandLine["arguments"]["--version"] = (bool)gRs.commandLine["arguments"].HasKey("--version");
-	gRs.commandLine["arguments"]["--use-implicit-console-appender"] = (bool)gRs.commandLine["arguments"].HasKey("--use-implicit-console-appender");
-	gRs.commandLine["arguments"]["--daemon"] = (bool)gRs.commandLine["arguments"].HasKey("--daemon");
+	bool tmp = (gRs.commandLine["--help"] != V_NULL);
+	gRs.commandLine["--help"] = (bool)tmp;
+	tmp = (gRs.commandLine["--version"] != V_NULL);
+	gRs.commandLine["--version"] = (bool)tmp;
+	tmp = (gRs.commandLine["arguments"]["--use-implicit-console-appender"] != V_NULL);
+	gRs.commandLine["arguments"]["--use-implicit-console-appender"] = (bool)tmp;
+	tmp = (gRs.commandLine["arguments"]["--daemon"] != V_NULL);
+	gRs.commandLine["arguments"]["--daemon"] = (bool)tmp;
 	if (gRs.commandLine["arguments"].HasKey("--uid")) {
 		gRs.commandLine["arguments"]["--uid"] = (uint32_t) atoi(STR(gRs.commandLine["arguments"]["--uid"]));
 	} else {
@@ -350,9 +354,6 @@ extern "C" BaseClientApplication *GetApplication_appselector(Variant configurati
 #ifdef HAS_APP_FLVPLAYBACK
 extern "C" BaseClientApplication *GetApplication_flvplayback(Variant configuration);
 #endif
-#ifdef HAS_APP_HOUSEBAND
-extern "C" BaseClientApplication *GetApplication_houseband(Variant configuration);
-#endif
 #ifdef HAS_APP_PROXYPUBLISH
 extern "C" BaseClientApplication *GetApplication_proxypublish(Variant configuration);
 #endif
@@ -364,6 +365,9 @@ extern "C" BaseClientApplication *GetApplication_stresstest(Variant configuratio
 #endif
 #ifdef HAS_APP_VPTESTS
 extern "C" BaseClientApplication *GetApplication_vptests(Variant configuration);
+#endif
+#ifdef HAS_APP_VMAPP
+extern "C" BaseClientApplication *GetApplication_vmapp(Variant configuration);
 #endif
 
 BaseClientApplication *SpawnApplication(Variant configuration) {
@@ -390,11 +394,6 @@ BaseClientApplication *SpawnApplication(Variant configuration) {
 		return GetApplication_flvplayback(configuration);
 	}
 #endif
-#ifdef HAS_APP_HOUSEBAND
-	else if (configuration[CONF_APPLICATION_NAME] == "houseband") {
-		return GetApplication_houseband(configuration);
-	}
-#endif
 #ifdef HAS_APP_PROXYPUBLISH
 	else if (configuration[CONF_APPLICATION_NAME] == "proxypublish") {
 		return GetApplication_proxypublish(configuration);
@@ -415,8 +414,14 @@ BaseClientApplication *SpawnApplication(Variant configuration) {
 		return GetApplication_vptests(configuration);
 	}
 #endif
+#ifdef HAS_APP_VMAPP
+	else if (configuration[CONF_APPLICATION_NAME] == "vmapp") {
+		return GetApplication_vmapp(configuration);
+	}
+#endif
 	else {
 		return NULL;
 	}
 }
 #endif
+

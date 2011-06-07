@@ -17,7 +17,7 @@
  *  along with crtmpserver.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef VM_LUA
+#ifdef HAS_LUA
 #ifndef _BASEVMLUA_H
 #define	_BASEVMLUA_H
 
@@ -54,5 +54,5 @@ private:
 
 
 #endif	/* _BASEVMLUA_H */
-#endif /* VM_LUA */
+#endif /* HAS_LUA */
 

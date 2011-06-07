@@ -668,7 +668,7 @@ bool BaseRTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
 	map<uint32_t, BaseOutStream *> subscribedOutStreams =
 			GetApplication()->GetStreamsManager()->GetWaitingSubscribers(
 			streamName, pInNetRTMPStream->GetType());
-	FINEST("subscribedOutStreams count: %zu", subscribedOutStreams.size());
+	FINEST("subscribedOutStreams count: %"PRIz"u", subscribedOutStreams.size());
 
 
 	//7. Bind the waiting subscribers
@@ -1649,12 +1649,14 @@ bool BaseRTMPAppProtocolHandler::SendRTMPMessage(BaseRTMPProtocol *pTo,
 					FATAL("Unable to get next invoke ID");
 					return false;
 				}
-				invokeId = _nextInvokeId[pTo->GetId()];
-				_nextInvokeId[pTo->GetId()] = invokeId + 1;
-				M_INVOKE_ID(message) = invokeId;
-
-				if (trackResponse)
+				if (trackResponse) {
+					invokeId = _nextInvokeId[pTo->GetId()];
+					_nextInvokeId[pTo->GetId()] = invokeId + 1;
+					M_INVOKE_ID(message) = invokeId;
 					_resultMessageTracking[pTo->GetId()][invokeId] = message;
+				} else {
+					M_INVOKE_ID(message) = (uint32_t) 0;
+				}
 				return pTo->SendMessage(message);
 			} else {
 				return pTo->SendMessage(message);

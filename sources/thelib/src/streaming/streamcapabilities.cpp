@@ -164,6 +164,21 @@ bool ReadSPSVUI(BitArray &ba, Variant &v) {
 	return true;
 }
 
+bool scaling_list(BitArray &ba, uint8_t sizeOfScalingList) {
+	uint32_t nextScale = 8;
+	uint32_t lastScale = 8;
+	uint64_t delta_scale = 0;
+	for (uint8_t j = 0; j < sizeOfScalingList; j++) {
+		if (nextScale != 0) {
+			if (!ba.ReadExpGolomb(delta_scale))
+				return false;
+			nextScale = (lastScale + delta_scale + 256) % 256;
+		}
+		lastScale = (nextScale == 0) ? lastScale : nextScale;
+	}
+	return true;
+}
+
 bool ReadSPS(BitArray &ba, Variant &v) {
 	//7.3.2.1 Sequence parameter set RBSP syntax
 	//14496-10.pdf 43/280
@@ -174,6 +189,35 @@ bool ReadSPS(BitArray &ba, Variant &v) {
 	READ_INT("reserved_zero_5bits", uint8_t, 5);
 	READ_INT("level_idc", uint8_t, 8);
 	READ_EG("seq_parameter_set_id", uint64_t);
+	if ((uint64_t) v["profile_idc"] >= 100) {
+		READ_EG("chroma_format_idc", uint64_t);
+		if ((uint64_t) v["chroma_format_idc"] == 3)
+			READ_BOOL("residual_colour_transform_flag");
+		READ_EG("bit_depth_luma_minus8", uint64_t);
+		READ_EG("bit_depth_chroma_minus8", uint64_t);
+		READ_BOOL("qpprime_y_zero_transform_bypass_flag");
+		READ_BOOL("seq_scaling_matrix_present_flag");
+		if ((bool)v["seq_scaling_matrix_present_flag"]) {
+			for (uint8_t i = 0; i < 8; i++) {
+				uint8_t flag = 0;
+				CHECK_BA_LIMITS("seq_scaling_list_present_flag", 1);
+				flag = ba.ReadBits<uint8_t > (1);
+				if (flag) {
+					if (i < 6) {
+						if (!scaling_list(ba, 16)) {
+							FATAL("scaling_list failed");
+							return false;
+						}
+					} else {
+						if (!scaling_list(ba, 64)) {
+							FATAL("scaling_list failed");
+							return false;
+						}
+					}
+				}
+			}
+		}
+	}
 	READ_EG("log2_max_frame_num_minus4", uint64_t);
 	READ_EG("pic_order_cnt_type", uint64_t);
 	if ((uint64_t) v["pic_order_cnt_type"] == 0) {
@@ -284,18 +328,18 @@ bool ReadPPS(BitArray &ba, Variant &v) {
 bool _VIDEO_AVC::Init(uint8_t *pSPS, uint32_t spsLength, uint8_t *pPPS,
 		uint32_t ppsLength) {
 	Clear();
-	if((spsLength<=0)
-		||(spsLength>65535)
-		||(ppsLength<=0)
-		||(ppsLength>65535)){
-			FATAL("Invalid SPS/PPS lengths");
-			return false;
+	if ((spsLength <= 0)
+			|| (spsLength > 65535)
+			|| (ppsLength <= 0)
+			|| (ppsLength > 65535)) {
+		FATAL("Invalid SPS/PPS lengths");
+		return false;
 	}
-	_spsLength = (uint16_t)spsLength;
+	_spsLength = (uint16_t) spsLength;
 	_pSPS = new uint8_t[_spsLength];
 	memcpy(_pSPS, pSPS, _spsLength);
 
-	_ppsLength = (uint16_t)ppsLength;
+	_ppsLength = (uint16_t) ppsLength;
 	_pPPS = new uint8_t[_ppsLength];
 	memcpy(_pPPS, pPPS, _ppsLength);
 
@@ -310,6 +354,9 @@ bool _VIDEO_AVC::Init(uint8_t *pSPS, uint32_t spsLength, uint8_t *pPPS,
 		_SPSInfo.Compact();
 		_width = ((uint32_t) _SPSInfo["pic_width_in_mbs_minus1"] + 1)*16;
 		_height = ((uint32_t) _SPSInfo["pic_height_in_map_units_minus1"] + 1)*16;
+		//		FINEST("_width: %u (%u); _height: %u (%u)",
+		//				_width, (uint32_t) _SPSInfo["pic_width_in_mbs_minus1"],
+		//				_height, (uint32_t) _SPSInfo["pic_height_in_map_units_minus1"]);
 	}
 
 	BitArray ppsBa;
@@ -333,6 +380,41 @@ void _VIDEO_AVC::Clear() {
 	}
 	_ppsLength = 0;
 	_rate = 0;
+}
+
+bool _VIDEO_AVC::Serialize(IOBuffer &dest) {
+	uint8_t temp[sizeof (_spsLength) + sizeof (_ppsLength)];
+	EHTONSP(temp, _spsLength);
+	dest.ReadFromBuffer(temp, sizeof (_spsLength));
+	dest.ReadFromBuffer(_pSPS, _spsLength);
+	EHTONSP(temp, _ppsLength);
+	dest.ReadFromBuffer(temp, sizeof (_ppsLength));
+	dest.ReadFromBuffer(_pPPS, _ppsLength);
+	return true;
+}
+
+bool _VIDEO_AVC::Deserialize(IOBuffer &src, _VIDEO_AVC &dest) {
+	dest.Clear();
+	uint8_t *pBuffer = GETIBPOINTER(src);
+	uint32_t length = GETAVAILABLEBYTESCOUNT(src);
+	if (length<sizeof (dest._spsLength)) {
+		FATAL("Not enough data");
+		return false;
+	}
+	dest._spsLength = ENTOHSP(pBuffer);
+	if (length<sizeof (dest._spsLength) + dest._spsLength + sizeof (dest._ppsLength)) {
+		FATAL("Not enough data");
+		return false;
+	}
+	dest._ppsLength = ENTOHSP(pBuffer + sizeof (dest._spsLength) + dest._spsLength);
+	if (!dest.Init(
+			pBuffer + sizeof (dest._spsLength), dest._spsLength,
+			pBuffer + sizeof (dest._spsLength) + dest._spsLength + sizeof (dest._ppsLength), dest._ppsLength)) {
+		FATAL("Unable to init AVC");
+		return false;
+	}
+
+	return src.Ignore(sizeof (dest._spsLength) + dest._spsLength + sizeof (dest._ppsLength) + dest._ppsLength);
 }
 
 _VIDEO_AVC::operator string() {
@@ -443,6 +525,34 @@ string _AUDIO_AAC::GetRTSPFmtpConfig() {
 	return "config=" + result;
 }
 
+bool _AUDIO_AAC::Serialize(IOBuffer &dest) {
+	uint8_t temp[sizeof (_aacLength)];
+	EHTONLP(temp, _aacLength);
+	dest.ReadFromBuffer(temp, sizeof (_aacLength));
+	dest.ReadFromBuffer(_pAAC, _aacLength);
+	return true;
+}
+
+bool _AUDIO_AAC::Deserialize(IOBuffer &src, _AUDIO_AAC &dest) {
+	dest.Clear();
+	uint8_t *pBuffer = GETIBPOINTER(src);
+	uint32_t length = GETAVAILABLEBYTESCOUNT(src);
+	if (length<sizeof (dest._aacLength)) {
+		FATAL("Not enough data");
+		return false;
+	}
+	dest._aacLength = ENTOHLP(pBuffer);
+	if (length<sizeof (dest._aacLength) + dest._aacLength) {
+		FATAL("Not enough data");
+		return false;
+	}
+	if (!dest.Init(pBuffer + sizeof (dest._aacLength), dest._aacLength)) {
+		FATAL("Unable to init AAC");
+		return false;
+	}
+	return src.Ignore(sizeof (dest._aacLength) + dest._aacLength);
+}
+
 _AUDIO_AAC::operator string() {
 	string result;
 	result += format("_aacLength: %u\n", _aacLength);
@@ -469,6 +579,12 @@ bool StreamCapabilities::InitAudioAAC(uint8_t *pBuffer, uint32_t length) {
 		return false;
 	}
 	audioCodecId = CODEC_AUDIO_AAC;
+	return true;
+}
+
+bool StreamCapabilities::InitAudioMP3() {
+	ClearAudio();
+	audioCodecId = CODEC_AUDIO_MP3;
 	return true;
 }
 
@@ -516,4 +632,82 @@ void StreamCapabilities::ClearAudio() {
 void StreamCapabilities::Clear() {
 	ClearVideo();
 	ClearAudio();
+}
+
+bool StreamCapabilities::Serialize(IOBuffer &dest) {
+	uint8_t temp[16];
+	EHTONLLP(temp, videoCodecId);
+	EHTONLLP(temp + 8, audioCodecId);
+	dest.ReadFromBuffer(temp, 16);
+	switch (videoCodecId) {
+		case CODEC_VIDEO_AVC:
+		{
+			if (!avc.Serialize(dest)) {
+				FATAL("Unable to serialize avc");
+				return false;
+			}
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+	switch (audioCodecId) {
+		case CODEC_AUDIO_AAC:
+		{
+			if (!aac.Serialize(dest)) {
+				FATAL("Unable to serialize aac");
+				return false;
+			}
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+	return true;
+}
+
+bool StreamCapabilities::Deserialize(IOBuffer &src, StreamCapabilities &capabilities) {
+	uint8_t *pBuffer = GETIBPOINTER(src);
+	uint32_t length = GETAVAILABLEBYTESCOUNT(src);
+	if (length < 16) {
+		FATAL("Not enough data");
+		return false;
+	}
+	capabilities.Clear();
+	capabilities.videoCodecId = ENTOHLLP(pBuffer);
+	capabilities.audioCodecId = ENTOHLLP(pBuffer + 8);
+	src.Ignore(16);
+	switch (capabilities.videoCodecId) {
+		case CODEC_VIDEO_AVC:
+		{
+			if (!_VIDEO_AVC::Deserialize(src, capabilities.avc)) {
+				FATAL("Unable to deserialize avc");
+				return false;
+			}
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+	switch (capabilities.audioCodecId) {
+		case CODEC_AUDIO_AAC:
+		{
+			if (!_AUDIO_AAC::Deserialize(src, capabilities.aac)) {
+				FATAL("Unable to deserialize aac");
+				return false;
+			}
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+	return true;
 }

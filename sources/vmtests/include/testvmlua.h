@@ -18,7 +18,7 @@
  */
 
 
-#ifdef VM_LUA
+#ifdef HAS_LUA
 
 #ifndef _TESTVMLUA_H
 #define	_TESTVMLUA_H
@@ -36,5 +36,5 @@ private:
 
 
 #endif	/* _TESTVMLUA_H */
-#endif	/* VM_LUA */
+#endif	/* HAS_LUA */
 

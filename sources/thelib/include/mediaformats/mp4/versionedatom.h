@@ -25,7 +25,7 @@
 
 class VersionedAtom
 : public BaseAtom {
-private:
+protected:
 	uint8_t _version;
 	uint8_t _flags[3];
 public:
