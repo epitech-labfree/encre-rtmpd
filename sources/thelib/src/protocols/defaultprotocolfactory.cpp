@@ -38,6 +38,7 @@
 #include "protocols/rtp/inboundrtpprotocol.h"
 #include "protocols/rtp/rtcpprotocol.h"
 #include "protocols/cli/inboundjsoncliprotocol.h"
+#include "protocols/encre/inboundencreprotocol.h"
 #include "protocols/rtmp/inboundrtmpsdiscriminatorprotocol.h"
 #include "protocols/rtmfp/inboundrtmfpprotocol.h"
 #include "protocols/rtmfp/outboundrtmfpprotocol.h"
@@ -45,7 +46,6 @@
 
 DefaultProtocolFactory::DefaultProtocolFactory()
 : BaseProtocolFactory() {
-
 }
 
 DefaultProtocolFactory::~DefaultProtocolFactory() {
@@ -103,6 +103,9 @@ vector<uint64_t> DefaultProtocolFactory::HandledProtocols() {
 	ADD_VECTOR_END(result, PT_INBOUND_JSONCLI);
 	ADD_VECTOR_END(result, PT_HTTP_4_CLI);
 #endif /* HAS_PROTOCOL_CLI */
+#ifdef HAS_PROTOCOL_ENCRE
+	ADD_VECTOR_END(result, PT_INBOUND_ENCRE);
+#endif /* HAS_PROTOCOL_ENCRE */
 
 	return result;
 }
@@ -155,6 +158,12 @@ vector<string> DefaultProtocolFactory::HandledProtocolChains() {
 	ADD_VECTOR_END(result, CONF_PROTOCOL_INBOUND_RTSP_RTP);
 	ADD_VECTOR_END(result, CONF_PROTOCOL_INBOUND_UDP_RTP);
 #endif /* HAS_PROTOCOL_RTP */
+#ifdef HAS_PROTOCOL_ENCRE
+	ADD_VECTOR_END(result, CONF_PROTOCOL_INBOUND_ENCRE);
+#endif /* HAS_PROTOCOL_ENCRE */
+#ifdef HAS_PROTOCOL_ENCRE
+	ADD_VECTOR_END(result, CONF_PROTOCOL_INBOUND_ENCRE_TS);
+#endif /* HAS_PROTOCOL_ENCRE */
 #ifdef HAS_PROTOCOL_CLI
 	ADD_VECTOR_END(result, CONF_PROTOCOL_INBOUND_CLI_JSON);
 #ifdef HAS_PROTOCOL_HTTP
@@ -282,6 +291,13 @@ vector<uint64_t> DefaultProtocolFactory::ResolveProtocolChain(string name) {
 	}
 #endif /* HAS_PROTOCOL_HTTP */
 #endif /* HAS_PROTOCOL_VAR */
+#ifdef HAS_PROTOCOL_ENCRE
+	else if (name == CONF_PROTOCOL_INBOUND_ENCRE_TS) {
+		ADD_VECTOR_END(result, PT_TCP);
+		ADD_VECTOR_END(result, PT_INBOUND_ENCRE);
+		ADD_VECTOR_END(result, PT_INBOUND_TS);
+	}
+#endif /* HAS_PROTOCOL_ENCRE */
 #ifdef HAS_PROTOCOL_CLI
 	else if (name == CONF_PROTOCOL_INBOUND_CLI_JSON) {
 		ADD_VECTOR_END(result, PT_TCP);
@@ -394,6 +410,11 @@ BaseProtocol *DefaultProtocolFactory::SpawnProtocol(uint64_t type, Variant &para
 			pResult=new HTTP4CLIProtocol();
 			break;
 #endif /* HAS_PROTOCOL_CLI */
+#ifdef HAS_PROTOCOL_ENCRE
+		case PT_INBOUND_ENCRE:
+			pResult = new InboundEncreProtocol();
+			break;
+#endif /* HAS_PROTOCOL_ENCRE */
 		default:
 			FATAL("Spawning protocol %s not yet implemented",
 					STR(tagToString(type)));

@@ -212,7 +212,6 @@ bool Initialize() {
 		FATAL("Unable to configure applications");
 		return false;
 	}
-
 	INFO("Install the quit signal");
 	installQuitSignal(QuitSignalHandler);
 
@@ -366,6 +365,9 @@ extern "C" BaseClientApplication *GetApplication_stresstest(Variant configuratio
 #ifdef HAS_APP_VPTESTS
 extern "C" BaseClientApplication *GetApplication_vptests(Variant configuration);
 #endif
+#ifdef HAS_APP_ENCRE
+extern "C" BaseClientApplication *GetApplication_encre(Variant configuration);
+#endif
 #ifdef HAS_APP_VMAPP
 extern "C" BaseClientApplication *GetApplication_vmapp(Variant configuration);
 #endif
@@ -412,6 +414,11 @@ BaseClientApplication *SpawnApplication(Variant configuration) {
 #ifdef HAS_APP_VPTESTS
 	else if (configuration[CONF_APPLICATION_NAME] == "vptests") {
 		return GetApplication_vptests(configuration);
+	}
+#endif
+#ifdef HAS_APP_ENCRE
+	else if (configuration[CONF_APPLICATION_NAME] == "encre") {
+		return GetApplication_encre(configuration);
 	}
 #endif
 #ifdef HAS_APP_VMAPP

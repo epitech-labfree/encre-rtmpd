@@ -52,6 +52,7 @@
 
 //MPEG-TS protocol
 #define PT_INBOUND_TS			MAKE_TAG3('I','T','S')
+#define PT_OUTBOUND_TS			MAKE_TAG3('O','T','S')
 
 //HTTP protocols
 #define PT_INBOUND_HTTP				MAKE_TAG4('I','H','T','T')
@@ -78,6 +79,9 @@
 //CLI protocols
 #define PT_INBOUND_JSONCLI		MAKE_TAG8('I','J','S','O','N','C','L','I')
 #define PT_HTTP_4_CLI			MAKE_TAG3('H','4','C')
+
+//ENCRE protocol
+#define PT_INBOUND_ENCRE		MAKE_TAG6('I','E','N','C','R','E')
 
 #endif	/* _PROTOCOLTYPES_H */
 

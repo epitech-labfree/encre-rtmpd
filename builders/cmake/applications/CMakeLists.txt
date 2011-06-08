@@ -15,3 +15,4 @@ ADD_SUBDIRECTORY(applestreamingclient applestreamingclient)
 ADD_SUBDIRECTORY(vmapp vmapp)
 
 ADD_SUBDIRECTORY(encre encre)
+ADD_SUBDIRECTORY(encre2 encre2)
