@@ -127,6 +127,11 @@ configuration=
 					port=9999,
 					protocol="inboundTcpTs"
 				},
+				{
+					ip="0.0.0.0",
+					port=4242,
+					protocol="inboundEncreTS",
+				},
 				--[[{
 					ip="0.0.0.0",
 					port=554,
@@ -269,7 +274,7 @@ configuration=
 			{
 				{
 					ip="0.0.0.0",
-					port=4242,
+					port=4243,
 					protocol="inboundEncreTS",
 				},
 			}
