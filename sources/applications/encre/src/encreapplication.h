@@ -64,6 +64,14 @@ namespace app_encre
 
     user_map                    &users();
     stream_map                  &streams();
+
+#ifdef HAS_PROTOCOL_RTMP
+    RTMPAppProtocolHandler      &rtmp();
+#endif /* HAS_PROTOCOL_RTMP */
+#ifdef HAS_PROTOCOL_CLI
+    CLIAppProtocolHandler       &cli();
+#endif /* HAS_PROTOCOL_CLI */
+
   };
 }
 

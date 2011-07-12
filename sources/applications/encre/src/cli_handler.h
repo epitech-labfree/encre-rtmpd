@@ -38,7 +38,9 @@ class CLIAppProtocolHandler : public BaseCLIAppProtocolHandler
   CLIAppProtocolHandler(Variant &configuration);
   virtual ~CLIAppProtocolHandler();
 
-  virtual bool ProcessMessage(BaseProtocol *pFrom, Variant &message);
+  virtual bool          ProcessMessage(BaseProtocol *pFrom, Variant &message);
+  // Sends a message to the client connected to the CLI interface.
+  bool                  SendMessage(BaseProtocol *pFrom, Variant &message);
 
   EncreApplication &encre();
 
