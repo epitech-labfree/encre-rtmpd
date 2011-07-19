@@ -93,3 +93,16 @@ stream_map &EncreApplication::streams()
   return m_streams;
 }
 
+#ifdef HAS_PROTOCOL_RTMP
+RTMPAppProtocolHandler      &EncreApplication::rtmp()
+{
+  return *_pRTMPHandler;
+}
+#endif /* HAS_PROTOCOL_RTMP */
+#ifdef HAS_PROTOCOL_CLI
+CLIAppProtocolHandler       &EncreApplication::cli()
+{
+  return *_pCLIHandler;
+}
+#endif /* HAS_PROTOCOL_CLI */
+

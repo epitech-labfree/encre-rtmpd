@@ -1,4 +1,4 @@
-/* 
+/*
  *  Copyright (c) 2010,
  *  Gavriloaie Eugen-Andrei (shiretu@gmail.com)
  *
@@ -82,6 +82,9 @@
 
 //ENCRE protocol
 #define PT_INBOUND_ENCRE		MAKE_TAG6('I','E','N','C','R','E')
+
+//Raw HTTP stream
+#define PT_INBOUND_RAW_HTTP_STREAM		MAKE_TAG4('I','R','H','S')
 
 #endif	/* _PROTOCOLTYPES_H */
 

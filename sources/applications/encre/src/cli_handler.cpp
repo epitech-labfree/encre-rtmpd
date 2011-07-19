@@ -67,6 +67,12 @@ bool CLIAppProtocolHandler::ProcessMessage(BaseProtocol *pFrom, Variant &message
   }
 }
 
+bool CLIAppProtocolHandler::SendMessage(BaseProtocol *pFrom, Variant &data)
+{
+  return Send(pFrom, "EVENT", "none", data);
+}
+
+
 bool CLIAppProtocolHandler::ProcessInvokeCommand(BaseProtocol *pFrom, Variant &command)
 {
   string cmd = STR(command["command"]);
@@ -162,9 +168,6 @@ bool CLIAppProtocolHandler::ProcessInvokeStreamWatcherDel(BaseProtocol *pFrom, V
 {
   return true;
 }
-
-
-
 
 #endif  /* HAS_PROTOCOL_CLI */
 
