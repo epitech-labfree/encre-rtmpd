@@ -134,6 +134,12 @@ configuration=
 				},
 				--[[{
 					ip="0.0.0.0",
+					port=7654,
+					protocol="inboundRawHttpStream",
+					crossDomainFile="/tmp/crossdomain.xml"
+				},
+				{
+					ip="0.0.0.0",
 					port=554,
 					protocol="inboundRtsp"
 				},]]--
@@ -141,8 +147,10 @@ configuration=
 			externalStreams =
 			{
 				--[[{
-					uri="mms://lr1w.latvijasradio.lv/pplr3s",
-					localStreamName="myMms"
+					uri="mms://channels.webradio.antenne.de/chillout",
+					localStreamName="myMms",
+					enableAAC=false,
+					enableMP3=true
 				},
 				{
 					uri="rtsp://a1956.l1857055475.c18570.g.lq.akamaistream.net/D/1956/18570/v0001/reflector:55475",
@@ -279,6 +287,111 @@ configuration=
 				},
 			}
 		},
+		{
+			name="proxypublish",
+			description="Application for forwarding streams to another RTMP server",
+			protocol="dynamiclinklibrary",
+			acceptors =
+			{
+				{	
+					ip="0.0.0.0",
+					port=6665,
+					protocol="inboundLiveFlv"
+				},
+			},
+			abortOnConnectError=true,
+			targetServers = 
+			{
+				--[[{
+					targetUri="rtmp://x.xxxxxxx.fme.ustream.tv/ustreamVideo/xxxxxxx",
+					targetStreamName="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					localStreamName="gigi",
+					emulateUserAgent="FMLE/3.0 (compatible; FMSc/1.0 http://www.rtmpd.com)"
+				}]]--,
+				{
+					targetUri="rtmp://localhost/vod",
+					targetStreamType="live", -- (live, record or append)
+					emulateUserAgent="My user agent",
+					localStreamName="stream1"
+				},
+			},
+			--[[externalStreams = 
+			{
+				{
+					uri="rtsp://82.177.67.61/axis-media/media.amp",
+					localStreamName="stream4",
+					forceTcp=false
+                },
+				{
+					uri="rtmp://edge01.fms.dutchview.nl/botr/bunny",
+					localStreamName="stream1"
+                },
+			},]]--
+			--validateHandshake=true,
+			--default=true,
+		},
+		{
+			name="stresstest",
+			description="Application for stressing a streaming server",
+			protocol="dynamiclinklibrary",
+			targetServer="localhost",
+			targetApp="vod",
+			active=false,
+			--[[streams = 
+			{
+				"lg00","lg01","lg02","lg03","lg04","lg05","lg06","lg07","lg08",
+				"lg09","lg10","lg11","lg12","lg13","lg14","lg15","lg16","lg17",
+				"lg18","lg19","lg20","lg21","lg22","lg23","lg24","lg25","lg26",
+				"lg27","lg28","lg29","lg30","lg31","lg32","lg33","lg34","lg35",
+				"lg36","lg37","lg38","lg39","lg40","lg41","lg42","lg43","lg44",
+				"lg45","lg46","lg47","lg48","lg49"
+			},]]--
+			streams = 
+			{
+				"mp4:lg.mp4"
+			},
+			numberOfConnections=10,
+			randomAccessStreams=false
+		},
+		{
+			name="applestreamingclient",
+			description="Apple Streaming Client",
+			protocol="dynamiclinklibrary",
+			--[[acceptors = 
+			{
+				{
+					ip="0.0.0.0",
+					port=5544,
+					protocol="inboundRtsp"
+				}
+			},]]--
+			aliases=
+			{
+				"asc",
+			},
+			--validateHandshake=true,
+			--default=true,
+		},
+		--[[{
+			name="vmapp",
+			description="An application demonstrating the use of virtual machines",
+			protocol="dynamiclinklibrary",
+			vmType="lua",
+			script="flvplayback.lua",
+			aliases=
+			{
+				"flvplayback1",
+				"vod1"
+			},
+			acceptors=
+			{
+				{
+					ip="0.0.0.0",
+					port=6544,
+					protocol="inboundTcpTs"
+				}
+			}
+		},]]--
 		--#INSERTION_MARKER# DO NOT REMOVE THIS. USED BY appscaffold SCRIPT.
 	}
 }

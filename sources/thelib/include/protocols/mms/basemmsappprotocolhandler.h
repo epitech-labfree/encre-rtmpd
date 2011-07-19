@@ -33,6 +33,8 @@ public:
 	virtual void UnRegisterProtocol(BaseProtocol *pProtocol);
 	
 	virtual bool PullExternalStream(URI uri, Variant streamConfig);
+	static bool SignalProtocolCreated(BaseProtocol *pProtocol,
+			Variant &parameters);
 };
 
 

@@ -917,7 +917,7 @@ bool BaseRTSPAppProtocolHandler::HandleRTSPResponse200Play(
 
 		return false;
 	}
-	return pFrom->EnableKeepAlive(10);
+	return pFrom->EnableKeepAlive(10, pFrom->GetCustomParameters()["uri"]["fullUri"]);
 }
 
 bool BaseRTSPAppProtocolHandler::HandleRTSPResponse404Play(RTSPProtocol *pFrom, Variant &requestHeaders,
@@ -931,7 +931,8 @@ bool BaseRTSPAppProtocolHandler::Play(RTSPProtocol *pFrom) {
 	//1. Save the URL in the custom parameters
 	string uri = (string) pFrom->GetCustomParameters()["uri"]["fullUri"];
 	if ((pFrom->GetCustomParameters()["uri"]["userName"] == V_STRING)
-			&& (pFrom->GetCustomParameters()["uri"]["password"] == V_STRING)) {
+			&& (pFrom->GetCustomParameters()["uri"]["password"] == V_STRING)
+			&& (pFrom->GetCustomParameters()["uri"]["userName"] != "")) {
 		pFrom->SetBasicAuthentication(pFrom->GetCustomParameters()["uri"]["userName"],
 				pFrom->GetCustomParameters()["uri"]["password"]);
 	}
@@ -1016,7 +1017,7 @@ string BaseRTSPAppProtocolHandler::GetAudioTrack(RTSPProtocol *pFrom,
 		result += "a=recvonly\r\n";
 		result += format("a=rtpmap:96 mpeg4-generic/%u/2\r\n",
 				pCapabilities->aac._sampleRate);
-		FINEST("result: %s", STR(result));
+		//FINEST("result: %s", STR(result));
 		result += "a=control:trackID="
 				+ (string) pFrom->GetCustomParameters()["audioTrackId"] + "\r\n";
 		//rfc3640-fmtp-explained.txt Chapter 4.1
