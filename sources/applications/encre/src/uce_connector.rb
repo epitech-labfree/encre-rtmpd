@@ -10,7 +10,7 @@
 ## Copyright (C) 2011 Julien 'Lta' BALLET
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 3 of the License, or
+## the Free Software Foundation; either version 2 of the License, or
 ## (at your option) any later version.
 ##
 ## This program is distributed in the hope that it will be useful,
@@ -26,25 +26,31 @@
 require 'rubygems'
 require 'logger'
 require 'yaml'
-require './ucengine_api'
-require './rtmpd_api'
 
-$conf = YAML::load_file 'platform.yml'
-$conf[:logger] = STDOUT if $conf[:logger] == "STDOUT" || !$conf[:logger]
-$log = Logger.new($conf[:logger])
-if (Logger::Severity::const_defined? $conf[:loglvl].upcase)
-  $log.level = Logger.const_get($conf[:loglvl].upcase.to_sym)
-else
-  $log.level = Logger::INFO  #default logger level
-end
+$:.unshift File.dirname(File.expand_path $0) + '/lib'
 
+require 'encre_settings'
+require 'uce_event'
+require 'uce_login'
+require 'uce_longpoller'
+require 'rtmpd_api'
+require 'shell'
+
+$log = Conf.i.logger
 $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
-$log.info "Configuration hash is: #{$conf}"
+
 
 #uce = UCEngine.new(:logger => $log, :uid => 'encre-video', :token => '123456')
-rtmpd = Rtmpd.new(:logger => $log)
+#rtmpd = Rtmpd.new(:logger => $log, :port => 2342)
 
 #rtmpd.cmd({:command => "user.new", :pwet => 98765431})
-rtmpd.user_new("user_uid", "user_sid")
+#rtmpd.user_new("user_uid", "user_sid")
 #rtmpd.user_del("test_uid")
 
+EM.run do
+  #EM.connect Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection
+  EM.open_keyboard Shell
+  UceLogin.new(Proc.new { |uid, sid| puts "Connected with #{uid}, #{sid}"},
+               Proc.new { |u, s| UceLongPoller.i.on_login(u, s) },
+               Proc.new { |u, s| UceEvent.i.on_login(u, s) })
+end

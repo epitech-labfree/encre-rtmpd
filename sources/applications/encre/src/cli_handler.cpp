@@ -31,9 +31,9 @@
 using namespace app_encre;
 
 CLIAppProtocolHandler::CLIAppProtocolHandler(Variant &configuration)
-  : BaseCLIAppProtocolHandler(configuration)
+  : BaseCLIAppProtocolHandler(configuration),
+    m_client(0)
 {
-
 }
 
 EncreApplication &CLIAppProtocolHandler::encre()
@@ -43,6 +43,27 @@ EncreApplication &CLIAppProtocolHandler::encre()
 
 CLIAppProtocolHandler::~CLIAppProtocolHandler()
 {
+}
+
+/*
+ * Only one Encre controller is allowed to connect, remember the
+ * current controller and disconnects any other which tries to connect.
+ */
+void CLIAppProtocolHandler::RegisterProtocol(BaseProtocol *pProtocol)
+{
+  if (!m_client)
+    m_client = pProtocol;
+  else
+  {
+    WARN("Encre: A CLI controller is already connected");
+    pProtocol->GracefullyEnqueueForDelete();
+  }
+}
+
+void CLIAppProtocolHandler::UnRegisterProtocol(BaseProtocol *pProtocol)
+{
+  if (pProtocol == m_client)
+    m_client = 0;
 }
 
 bool CLIAppProtocolHandler::ProcessMessage(BaseProtocol *pFrom, Variant &message)
@@ -67,9 +88,14 @@ bool CLIAppProtocolHandler::ProcessMessage(BaseProtocol *pFrom, Variant &message
   }
 }
 
-bool CLIAppProtocolHandler::SendMessage(BaseProtocol *pFrom, Variant &data)
+bool CLIAppProtocolHandler::SendControllerMessage(Variant &data)
 {
-  return Send(pFrom, "EVENT", "none", data);
+  FINEST("Trying to send a message");
+
+  if (m_client)
+    return Send(m_client, "EVENT", "none", data);
+  else
+    return false;
 }
 
 

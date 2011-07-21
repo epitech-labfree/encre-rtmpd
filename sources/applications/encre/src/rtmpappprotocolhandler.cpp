@@ -66,19 +66,19 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
 
   FINEST("ProcessInvokeConnect (uid, sid) = (%s, %s)", STR(uid), STR(sid));
 
-  if (encre().users().exists(uid) && encre().users()[uid].properties()["sid"] == sid)
+  //if (encre().users().exists(uid) && encre().users()[uid].properties()["sid"] == sid)
   {
     FINEST("User authenticated");
     // FIXME I'm working on this. LEAK
-    encre().cli().SendMessage(pFrom, *(new Variant("Client is connected, test message")));
+    encre().cli().SendControllerMessage(*(new Variant("Client is connected, test message")));
     return true;
   }
-  else
-  {
-    FINEST("User isn't allowed to connect (yet)");
-    pFrom->GracefullyEnqueueForDelete();
-    return false;
-  }
+  // else
+  // {
+  //   FINEST("User isn't allowed to connect (yet)");
+  //   pFrom->GracefullyEnqueueForDelete();
+  //   return false;
+  // }
 }
 
 bool        RTMPAppProtocolHandler::ProcessInvokeCreateStream(BaseRTMPProtocol *pFrom,

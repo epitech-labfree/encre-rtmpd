@@ -27,6 +27,7 @@ require 'rubygems'
 require 'rest_client'
 require 'json'
 require 'logger'
+require 'em-http'
 
 
 class Hash

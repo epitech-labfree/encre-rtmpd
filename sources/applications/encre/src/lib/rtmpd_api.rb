@@ -10,7 +10,7 @@
 ## Copyright (C) 2011 Julien 'Lta' BALLET
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 3 of the License, or
+## the Free Software Foundation; either version 2 of the License, or
 ## (at your option) any later version.
 ##
 ## This program is distributed in the hope that it will be useful,
@@ -23,26 +23,56 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
-require 'socket'
+require 'eventmachine'
+require 'singleton'
 require 'json'
 
-class Rtmpd
-  [:server, :port, :logger].each do |e|
-    eval "def #{e}()
-            nil
-            @conf[:#{e}] if @conf.has_key? :#{e}
-          end"
+class RtmpdConnection < EM::Connection
+  def initialize(*args)
+    super
   end
 
-  def initialize(opts = {})
-    @conf = { :server => '127.0.0.1', :port => 1234 }.merge opts
+  def post_init
+    @buffer = String.new
+    Rtmpd.i.send = Proc.new { |data| send_data data }
+    #send_data({:command => "nothinh", :test => 23}.to_json.to_s + "\n")
+  end
 
-    @socket = Socket.tcp(server, port)
+  def receive_data(data)
+    data.chomp!
+
+    msg = JSON.parse data
+    on_message msg
+  end
+
+  def on_message(message)
+    #puts "Got a message #{message.class}"
+    puts message
+  end
+
+  def unbind
+    Conf.i.logger.warn "Connection to Rtmpd closed"
+    EM::Timer.new(1) do
+      Conf.i.logger.warn "Trying to reconnect to Rtmpd"
+      EM.connect Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection
+    end
+  end
+end
+
+class Rtmpd
+  include Singleton
+
+  attr_accessor :send
+
+  def initialize()
+  end
+
+  def self.i
+    self.instance
   end
 
   def cmd(h = {})
-    @socket << h.to_json << "\n"
-    logger.info @socket.readline
+    @send.call h.to_json + "\n" if @send
   end
 
   def user_new(uid, sid)

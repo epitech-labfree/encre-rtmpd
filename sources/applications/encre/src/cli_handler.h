@@ -38,9 +38,12 @@ class CLIAppProtocolHandler : public BaseCLIAppProtocolHandler
   CLIAppProtocolHandler(Variant &configuration);
   virtual ~CLIAppProtocolHandler();
 
+  void RegisterProtocol(BaseProtocol *pProtocol);
+  void UnRegisterProtocol(BaseProtocol *pProtocol);
+
   virtual bool          ProcessMessage(BaseProtocol *pFrom, Variant &message);
   // Sends a message to the client connected to the CLI interface.
-  bool                  SendMessage(BaseProtocol *pFrom, Variant &message);
+  bool                  SendControllerMessage(Variant &message);
 
   EncreApplication &encre();
 
@@ -55,6 +58,7 @@ class CLIAppProtocolHandler : public BaseCLIAppProtocolHandler
   bool ProcessInvokeStreamWatcherNew(BaseProtocol *pFrom, Variant &command);
   bool ProcessInvokeStreamWatcherDel(BaseProtocol *pFrom, Variant &command);
 
+  BaseProtocol          *m_client;
 };
 }
 
