@@ -36,6 +36,7 @@
 #define ST_OUT_NET_RTMP_4_TS	MAKE_TAG6('O','N','R','4','T','S')
 #define ST_OUT_NET_RTMP_4_RTMP	MAKE_TAG5('O','N','R','4','R')
 #define ST_OUT_NET_RTP			MAKE_TAG3('O','N','P')
+#define ST_OUT_NET_TS			MAKE_TAG3('O','N','T')
 #define ST_OUT_FILE				MAKE_TAG2('O','F')
 #define ST_OUT_FILE_RTMP		MAKE_TAG3('O','F','R')
 #define ST_OUT_FILE_RTMP_FLV	MAKE_TAG6('O','F','R','F','L','V')
