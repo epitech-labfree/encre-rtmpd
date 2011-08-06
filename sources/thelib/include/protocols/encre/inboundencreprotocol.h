@@ -25,27 +25,10 @@
 
 class InboundEncreProtocol
 : public BaseEncreProtocol {
-protected:
-	IOBuffer		_outputBuffer;
 public:
 	InboundEncreProtocol();
 	virtual			~InboundEncreProtocol();
 
-	virtual bool		AllowFarProtocol(uint64_t type);
-	virtual bool		AllowNearProtocol(uint64_t type);
-	virtual bool		SignalInputData(int32_t recvAmount);
-	virtual bool		SignalInputData(IOBuffer &buffer);
-	virtual bool		Initialize(Variant &parameters);
-	virtual IOBuffer*	GetOutputBuffer();
-
-private:
-	bool			TypeStream(std::string&);
-	bool			SendData(IOBuffer &buffer);
-
-	bool			_bTypeStream;
-	bool			_bSender;
-	bool			_bReceiver;
-	std::string		_bStreamName;
 };
 
 
