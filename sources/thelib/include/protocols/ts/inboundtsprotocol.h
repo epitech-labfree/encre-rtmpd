@@ -70,6 +70,8 @@ public:
 	BaseTSAppProtocolHandler *GetProtocolHandler();
 	uint32_t GetChunkSize();
 	void SetStepByStep(bool stepByStep);
+	bool SendRawData(uint8_t *pData, uint32_t length);
+
 private:
 	void FreePidDescriptor(PIDDescriptor *pPIDDescriptor);
 	bool DetermineChunkSize(IOBuffer &buffer);
