@@ -142,8 +142,8 @@ bool BaseRTMPProtocol::SignalInputData(IOBuffer &buffer) {
 	bool result = false;
 	if (_handshakeCompleted) {
 		result = ProcessBytes(buffer);
-		uint32_t decodedBytes = GetDecodedBytesCount();
-		if (result && decodedBytes >= _nextReceivedBytesCountReport) {
+		uint64_t decodedBytes = GetDecodedBytesCount();
+		if (result && (decodedBytes >= _nextReceivedBytesCountReport)) {
 			Variant _bytesReadMessage = GenericMessageFactory::GetAck(decodedBytes);
 			_nextReceivedBytesCountReport += _winAckSize;
 			if (!SendMessage(_bytesReadMessage)) {
@@ -252,8 +252,8 @@ uint32_t BaseRTMPProtocol::GetOutboundChunkSize() {
 }
 
 bool BaseRTMPProtocol::SetInboundChunkSize(uint32_t chunkSize) {
-	WARN("Chunk size changed for RTMP connection %p: %u->%u", this,
-			_inboundChunkSize, chunkSize);
+	/*WARN("Chunk size changed for RTMP connection %p: %u->%u", this,
+			_inboundChunkSize, chunkSize);*/
 	_inboundChunkSize = chunkSize;
 	for (uint32_t i = 0; i < MAX_STREAMS_COUNT; i++) {
 		if (_streams[i] != NULL) {

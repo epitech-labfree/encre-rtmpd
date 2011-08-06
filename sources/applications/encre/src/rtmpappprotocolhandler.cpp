@@ -19,6 +19,7 @@
 
 
 #include "rtmpappprotocolhandler.h"
+#include "cli_handler.h"
 #include "protocols/rtmp/messagefactories/messagefactories.h"
 using namespace app_encre;
 
@@ -50,9 +51,9 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
   Variant params = request["invoke"]["parameters"];
 
   if (!(BaseRTMPAppProtocolHandler::ProcessInvokeConnect(pFrom, request)
-        &&params.HasKey("__index__value__1")
-        && params["__index__value__1"].HasKey("__index__value__0")
-        && params["__index__value__1"].HasKey("__index__value__1")))
+        && HAS_IDX(params, 1)
+        && HAS_IDX(AT(params, 1), 0)
+        && HAS_IDX(AT(params, 1), 1)))
   {
     WARN("ProcessInvokeConnect: Wrong number of parameters");
     // FIXME The nice way ??
@@ -60,14 +61,16 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
     return false;
   }
 
-  uid = STR(params["__index__value__1"]["__index__value__0"]);
-  sid = STR(params["__index__value__1"]["__index__value__1"]);
+  uid = STR(AT(AT(params, 1), 0));
+  uid = STR(AT(AT(params, 1), 1));
 
   FINEST("ProcessInvokeConnect (uid, sid) = (%s, %s)", STR(uid), STR(sid));
 
   if (encre().users().exists(uid) && encre().users()[uid].properties()["sid"] == sid)
   {
     FINEST("User authenticated");
+    // FIXME I'm working on this. LEAK
+    encre().cli().SendMessage(pFrom, *(new Variant("Client is connected, test message")));
     return true;
   }
   else
@@ -88,7 +91,7 @@ bool        RTMPAppProtocolHandler::ProcessInvokeCreateStream(BaseRTMPProtocol *
   return true;
 }
 
-bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
+  bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
                                                          Variant &request)
 {
   BaseRTMPAppProtocolHandler::ProcessInvokePublish(pFrom, request);

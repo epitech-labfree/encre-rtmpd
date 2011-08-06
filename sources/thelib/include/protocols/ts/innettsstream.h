@@ -34,6 +34,8 @@ class DLLEXP InNetTSStream
 private:
 	//audio section
 	_PIDDescriptor *_pAudioPidDescriptor;
+	uint64_t _lastRawPtsAudio;
+	uint32_t _audioRollOverCount;
 	double _ptsTimeAudio;
 #ifdef COMPUTE_DTS_TIME
 	double _dtsTimeAudio;
@@ -43,14 +45,19 @@ private:
 	double _lastGotAudioTimestamp;
 	double _lastSentAudioTimestamp;
 	uint32_t _audioPacketsCount;
+	uint64_t _audioBytesCount;
 
 	//video section
 	_PIDDescriptor *_pVideoPidDescriptor;
+	uint64_t _lastRawPtsVideo;
+	uint32_t _videoRollOverCount;
 	double _ptsTimeVideo;
 #ifdef COMPUTE_DTS_TIME
 	double _dtsTimeVideo;
 #endif
 	double _deltaTimeVideo;
+	uint32_t _videoPacketsCount;
+	uint64_t _videoBytesCount;
 	IOBuffer _currentNal;
 
 	double _feedTime;
@@ -86,6 +93,7 @@ public:
 	virtual bool SignalResume();
 	virtual bool SignalSeek(double &absoluteTimestamp);
 	virtual bool SignalStop();
+	virtual void GetStats(Variant &info);
 private:
 	bool HandleAudioData(uint8_t *pRawBuffer, uint32_t rawBufferLength,
 			double timestamp, bool packetStart);

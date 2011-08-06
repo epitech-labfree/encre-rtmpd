@@ -33,6 +33,8 @@
 
 #include "protocols/rtmp/basertmpappprotocolhandler.h"
 #include "encreapplication.h"
+#include "encre_helpers.h"
+
 namespace app_encre {
 
   class RTMPAppProtocolHandler : public BaseRTMPAppProtocolHandler {

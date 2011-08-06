@@ -300,8 +300,12 @@ bool InboundTSProtocol::ProcessPacket(uint32_t packetHeader,
 		}
 		case PID_TYPE_UNKNOWN:
 		{
-			WARN("PID %hu not known yet", pPIDDescriptor->pid);
+			if (!MAP_HAS1(_unknownPids, pPIDDescriptor->pid)) {
+				WARN("PID %hu not known yet", pPIDDescriptor->pid);
+				_unknownPids[pPIDDescriptor->pid] = pPIDDescriptor->pid;
+			}
 			return true;
+
 		}
 		case PID_TYPE_NULL:
 		{
@@ -446,17 +450,24 @@ bool InboundTSProtocol::ProcessPidTypePMT(uint32_t packetHeader,
 		}
 	}
 
-	//4. Create the stream if we have at least videoPid or audioPid
-	InNetTSStream *pStream = NULL;
-	std::string name;
-	if (_pFarProtocol) {
-		name = std::string(_pFarProtocol->GetCustomParameters()["streamName"]);
-	} else {
-		name = format("ts_%u_%hu_%hu", GetId(), audioPid, videoPid);
+	//4. Compute the stream name
+	string streamName = "";
+	if (GetCustomParameters().HasKeyChain(V_STRING, true, 1, "localStreamName")) {
+		streamName = (string) GetCustomParameters()["localStreamName"];
+	}
+	else if (_pFarProtocol && _pFarProtocol->GetCustomParameters()["streamName"] == V_STRING) {
+		streamName = std::string(_pFarProtocol->GetCustomParameters()["streamName"]);
+	}
+	else {
+		streamName = format("ts_%u_%hu_%hu", GetId(), audioPid, videoPid);
 	}
 
+	//4. Create the stream if we have at least videoPid or audioPid
+	InNetTSStream *pStream = NULL;
+
 	if ((videoPid != 0) || (audioPid != 0)) {
-		pStream = new InNetTSStream(this, GetApplication()->GetStreamsManager(), name);
+		pStream = new InNetTSStream(this, GetApplication()->GetStreamsManager(),
+				streamName);
 	}
 
 	//5. Create the pid descriptors for audioPid and videoPid and store them

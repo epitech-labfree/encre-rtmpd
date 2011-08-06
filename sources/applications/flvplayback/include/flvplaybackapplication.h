@@ -40,6 +40,12 @@ namespace app_flvplayback {
 	class RTPAppProtocolHandler;
 	class RTSPAppProtocolHandler;
 #endif /* HAS_PROTOCOL_RTP */
+#ifdef HAS_PROTOCOL_MMS
+	class MMSAppProtocolHandler;
+#endif /* HAS_PROTOCOL_MMS */
+#ifdef HAS_PROTOCOL_RAWHTTPSTREAM
+	class RawHTTPStreamAppProtocolHandler;
+#endif /* HAS_PROTOCOL_RAWHTTPSTREAM */
 
 	class FLVPlaybackApplication
 	: public BaseClientApplication {
@@ -60,6 +66,12 @@ namespace app_flvplayback {
 		RTPAppProtocolHandler *_pRTPHandler;
 		RTSPAppProtocolHandler *_pRTSPHandler;
 #endif /* HAS_PROTOCOL_RTP */
+#ifdef HAS_PROTOCOL_MMS
+		MMSAppProtocolHandler *_pMMSHandler;
+#endif /* HAS_PROTOCOL_MMS */
+#ifdef HAS_PROTOCOL_RAWHTTPSTREAM
+		RawHTTPStreamAppProtocolHandler *_pRawHTTPStreamHandler;
+#endif /* HAS_PROTOCOL_RAWHTTPSTREAM */
 	public:
 		FLVPlaybackApplication(Variant &configuration);
 		virtual ~FLVPlaybackApplication();

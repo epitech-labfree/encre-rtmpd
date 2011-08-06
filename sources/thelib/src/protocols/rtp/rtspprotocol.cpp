@@ -75,6 +75,7 @@ RTSPProtocol::RTSPProtocol()
 	_pInboundConnectivity = NULL;
 	_basicAuthentication = "";
 	_keepAliveTimerId = 0;
+	_pOutStream = NULL;
 }
 
 RTSPProtocol::~RTSPProtocol() {
@@ -82,6 +83,10 @@ RTSPProtocol::~RTSPProtocol() {
 	CloseInboundConnectivity();
 	if (ProtocolManager::GetProtocol(_keepAliveTimerId) != NULL) {
 		ProtocolManager::GetProtocol(_keepAliveTimerId)->EnqueueForDelete();
+	}
+	if (_pOutStream != NULL) {
+		delete _pOutStream;
+		_pOutStream = NULL;
 	}
 }
 
@@ -142,14 +147,18 @@ void RTSPProtocol::SetBasicAuthentication(string userName, string password) {
 	_basicAuthentication = format("Basic %s", STR(b64(format("%s:%s", STR(userName), STR(password)))));
 }
 
-bool RTSPProtocol::EnableKeepAlive(uint32_t period) {
+bool RTSPProtocol::EnableKeepAlive(uint32_t period, string keepAliveURI) {
 	RTSPKeepAliveTimer *pTimer = new RTSPKeepAliveTimer(GetId());
 	_keepAliveTimerId = pTimer->GetId();
+	_keepAliveURI = keepAliveURI;
+	trim(_keepAliveURI);
+	if (_keepAliveURI == "")
+		_keepAliveURI = "*";
 	return pTimer->EnqueueForTimeEvent(period);
 }
 
 bool RTSPProtocol::SendKeepAliveOptions() {
-	PushRequestFirstLine(RTSP_METHOD_OPTIONS, "*", RTSP_VERSION_1_0);
+	PushRequestFirstLine(RTSP_METHOD_OPTIONS, _keepAliveURI, RTSP_VERSION_1_0);
 	if (GetCustomParameters().HasKey(RTSP_HEADERS_SESSION)) {
 		PushResponseHeader(RTSP_HEADERS_SESSION,
 				GetCustomParameters()[RTSP_HEADERS_SESSION]);
@@ -386,6 +395,14 @@ string RTSPProtocol::GetTransportHeaderLine(bool isAudio) {
 bool RTSPProtocol::SendRaw(uint8_t *pBuffer, uint32_t length) {
 	_outputBuffer.ReadFromBuffer(pBuffer, length);
 	return EnqueueForOutbound();
+}
+
+void RTSPProtocol::SetOutStream(BaseOutStream *pOutStream) {
+	if (_pOutStream != NULL) {
+		delete _pOutStream;
+		_pOutStream = NULL;
+	}
+	_pOutStream = pOutStream;
 }
 
 bool RTSPProtocol::SendMessage(Variant &headers, string &content) {

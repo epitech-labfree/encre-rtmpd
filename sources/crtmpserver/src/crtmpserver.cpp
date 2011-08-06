@@ -60,6 +60,7 @@ void PrintHelp();
 void PrintVersion();
 void NormalizeCommandLine(string configFile);
 bool ApplyUIDGID();
+void WritePidFile(pid_t pid);
 
 RunningStatus gRs;
 
@@ -169,6 +170,8 @@ bool Initialize() {
 			}
 
 			if (pid > 0) {
+				if (gRs.commandLine["arguments"].HasKey("--pid"))
+					WritePidFile(pid);
 				return false;
 			}
 
@@ -290,6 +293,9 @@ void PrintHelp() {
 	cout << "      Run the process with the specified user id\n" << endl;
 	cout << "    --gid=<gid>" << endl;
 	cout << "      Run the process with the specified group id\n" << endl;
+	cout << "    --pid=<pid_file>" << endl;
+	cout << "      Create PID file."<< endl;
+	cout << "      Works only if --daemon option is specified\n"<< endl;
 }
 
 void PrintVersion() {
@@ -338,6 +344,33 @@ bool ApplyUIDGID() {
 	}
 #endif
 	return true;
+}
+
+void WritePidFile(pid_t pid) {
+	/*!
+	 * rewrite PID file if it already exists
+	 */
+	string pidFile = gRs.commandLine["arguments"]["--pid"];
+	struct stat sb;
+	if (stat(STR(pidFile), &sb) == 0) {
+		WARN("pid file %s already exists\n", STR(pidFile));
+	} else if (errno != ENOENT) {
+		WARN("stat: %s", strerror(errno));
+		return;
+	}
+
+	File f;
+	if (!f.Initialize(STR(pidFile), FILE_OPEN_MODE_TRUNCATE)) {
+		WARN("Unable to open PID file %s", STR(pidFile));
+		return;
+	}
+
+	string content = format("%"PRIz"d", pid);
+	if (!f.WriteString(content)) {
+		WARN("Unable to write PID to file %s", STR(pidFile));
+		return;
+	}
+	f.Close();
 }
 
 #ifdef COMPILE_STATIC
