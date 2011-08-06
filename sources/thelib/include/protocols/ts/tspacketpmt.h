@@ -105,6 +105,7 @@ public:
 	map<uint16_t, TSStreamInfo> & GetStreamsInfo();
 
 	bool Read(uint8_t *pBuffer, uint32_t &cursor, uint32_t maxCursor);
+	void CreatePMT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t& maxCursor, vector<TSStreamInfo*> streams);
 	static uint32_t PeekCRC(uint8_t *pBuffer, uint32_t cursor, uint32_t maxCursor);
 };
 
