@@ -149,7 +149,7 @@ bool InNetTSStream::FeedData(uint8_t *pData, uint32_t length, bool packetStart,
 			length -= (9 + pesHeaderLength);
 
 		} else {
-			WARN("Not enoght data");
+			WARN("Not enought data");
 			return true;
 		}
 	}
@@ -186,7 +186,7 @@ void InNetTSStream::ReadyForSend() {
 
 bool InNetTSStream::IsCompatibleWithType(uint64_t type) {
 	return TAG_KIND_OF(type, ST_OUT_NET_RTMP_4_TS)
-			|| (type == ST_OUT_NET_RTP);
+			|| (type == ST_OUT_NET_RTP) || (type == ST_OUT_NET_TS);
 }
 
 void InNetTSStream::SignalOutStreamAttached(BaseOutStream *pOutStream) {
