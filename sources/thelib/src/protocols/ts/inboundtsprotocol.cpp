@@ -27,7 +27,6 @@
 #include "protocols/ts/tspacketpmt.h"
 #include "protocols/ts/basetsappprotocolhandler.h"
 #include "protocols/ts/innettsstream.h"
-#include "protocols/ts/outnettsstream.h"
 #include "protocols/ts/tsboundscheck.h"
 #include "protocols/encre/baseencreprotocol.h"
 #include "protocols/rtmp/header_le_ba.h"
@@ -83,6 +82,8 @@ InboundTSProtocol::InboundTSProtocol()
 	_chunkSizeDetectionCount = 0;
 
 	_stepByStep = false;
+
+	_pOutStream = NULL;
 }
 
 InboundTSProtocol::~InboundTSProtocol() {
@@ -92,6 +93,10 @@ InboundTSProtocol::~InboundTSProtocol() {
 		FreePidDescriptor(MAP_VAL(i));
 	}
 	_pidMapping.clear();
+
+	if (_pOutStream != NULL) {
+		delete _pOutStream;
+	}
 }
 
 bool InboundTSProtocol::Initialize(Variant &parameters) {
@@ -123,8 +128,7 @@ bool InboundTSProtocol::SignalInputData(IOBuffer &buffer) {
 					name = format("ts_%u_0_0", GetId());
 				}
 
-			OutNetTsStream* pOutStream = NULL;
-			pOutStream = new OutNetTsStream(this, GetApplication()->GetStreamsManager(), name);
+			_pOutStream = new OutNetTsStream(this, GetApplication()->GetStreamsManager(), name);
 			map<uint32_t, BaseStream *> existingStreams =
 				GetApplication()->GetStreamsManager()->FindByTypeByName(
 				ST_IN_NET_TS, name, false, false);
@@ -132,7 +136,7 @@ bool InboundTSProtocol::SignalInputData(IOBuffer &buffer) {
 				FOR_MAP(existingStreams, uint32_t, BaseStream *, i) {
 					InNetTSStream *pTempStream = (InNetTSStream *) MAP_VAL(i);
 					if (pTempStream->GetProtocol() != NULL) {
-						pOutStream->Link(pTempStream);
+						_pOutStream->Link(pTempStream);
 					}
 				}
 			}

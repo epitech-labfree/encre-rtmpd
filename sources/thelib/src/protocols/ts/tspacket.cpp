@@ -134,6 +134,9 @@ void TSPacket::calCrc(uint32_t& crc, uint8_t* buff, uint32_t length) {
 
 TSPacket::~TSPacket() {
 	_packet.IgnoreAll();
+	for (uint32_t i=0; i < _programStreamType.size(); ++i) {
+		delete _programStreamType[i];
+	}
 }
 
 #include <stdio.h>

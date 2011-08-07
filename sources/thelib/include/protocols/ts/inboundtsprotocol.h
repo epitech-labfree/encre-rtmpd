@@ -25,6 +25,7 @@
 #include "protocols/baseprotocol.h"
 #include "protocols/ts/pidtypes.h"
 #include "protocols/ts/tspacketheader.h"
+#include "protocols/ts/outnettsstream.h"
 
 #define TS_CHUNK_188 188
 #define TS_CHUNK_204 204
@@ -57,6 +58,7 @@ private:
 	BaseTSAppProtocolHandler *_pProtocolHandler;
 	bool _stepByStep;
 	map<uint16_t, uint16_t> _unknownPids;
+	OutNetTsStream* _pOutStream;
 public:
 	InboundTSProtocol();
 	virtual ~InboundTSProtocol();
