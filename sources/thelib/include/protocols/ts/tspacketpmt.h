@@ -23,8 +23,8 @@
 #define	_TSPACKETPMT_H
 
 #include "common.h"
+#include "protocols/ts/tspacket.h"
 #include "protocols/ts/streamdescriptors.h"
-
 
 //Table 2-29 : Stream type assignments
 #define TS_STREAMTYPE_VIDEO_MPEG1     0x01
@@ -71,7 +71,10 @@ typedef struct _TSStreamInfo {
 //iso13818-1.pdf page 64/174
 //Table 2-28 ‚Äö√Ñ√¨ Transport Stream program map section
 
-class TSPacketPMT {
+class BaseProtocol;
+
+class TSPacketPMT
+: public TSPacket {
 private:
 	//fields
 	uint8_t _tableId;
@@ -90,12 +93,13 @@ private:
 	uint8_t _reserved5;
 	uint16_t _programInfoLength;
 	uint32_t _crc;
+	vector<TSStreamInfo*> _programStreamType;
 
 	//internal variables
 	vector<StreamDescriptor> _programInfoDescriptors;
 	map<uint16_t, TSStreamInfo> _streams;
 public:
-	TSPacketPMT();
+	TSPacketPMT(BaseProtocol* pProtocol, uint16_t pid);
 	virtual ~TSPacketPMT();
 
 	operator string();
@@ -105,8 +109,9 @@ public:
 	map<uint16_t, TSStreamInfo> & GetStreamsInfo();
 
 	bool Read(uint8_t *pBuffer, uint32_t &cursor, uint32_t maxCursor);
-	void CreatePMT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t& maxCursor, vector<TSStreamInfo*> streams);
+	bool CreatePMT();
 	static uint32_t PeekCRC(uint8_t *pBuffer, uint32_t cursor, uint32_t maxCursor);
+	std::vector<TSStreamInfo*>& GetProgramStreamType();
 };
 
 

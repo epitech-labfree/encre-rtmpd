@@ -24,11 +24,14 @@
 #include "protocols/ts/tsboundscheck.h"
 #include "protocols/rtmp/header_le_ba.h"
 
-TSPacketPMT::TSPacketPMT() {
-
+TSPacketPMT::TSPacketPMT(BaseProtocol* pProtocol, uint16_t pid)
+: TSPacket(pProtocol, pid) {
 }
 
 TSPacketPMT::~TSPacketPMT() {
+	for (uint32_t i=0; i < _programStreamType.size(); ++i) {
+		delete _programStreamType[i];
+	}
 }
 
 TSPacketPMT::operator string() {
@@ -208,27 +211,37 @@ uint32_t TSPacketPMT::PeekCRC(uint8_t *pBuffer, uint32_t cursor, uint32_t maxCur
 	return ENTOHLP((pBuffer + cursor)); //----MARKED-LONG---
 }
 
-void TSPacketPMT::CreatePMT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t& maxCursor, vector<TSStreamInfo*> streams) {
+vector<TSStreamInfo*>& TSPacketPMT::GetProgramStreamType() {
+	return _programStreamType;
+}
+
+bool TSPacketPMT::CreatePMT() {
 	uint8_t  versionNumber = 31; //static, toussa toussa
-	uint8_t  sectionLength = 9 + streams.size() + streams.size() * 5 + 4;
+	uint8_t  sectionLength = 9 + _programStreamType.size() + _programStreamType.size() * 5 + 4;
 	uint8_t  programInfoLength = 0;
 	uint16_t  pcrPid = 68;
 	uint32_t crc = 0xffffffff;
 	uint16_t  programNum = 1;
 	uint8_t  CurrentNextIndicator = 1;
+	uint32_t cursor = 0;
+
+	CreateHeader();
+	cursor += 4;
 
 	uint8_t tmp8 = 0x00;
-	//pBuffer.ReadFromBuffer(&tmp8, 1);
-
-	tmp8 = 188 - (cursor + sectionLength + 3); //PointerFiled                                                                                                     
-        pBuffer.ReadFromBuffer(&tmp8, 1);
+	//_packet.ReadFromBuffer(&tmp8, 1);
+	tmp8 = _maxCursor - (cursor + sectionLength + 3); //PointerFiled
+        _packet.ReadFromBuffer(&tmp8, 1);
+	cursor +=1;
         for (uint32_t i=0; i < tmp8; ++i) {
-		pBuffer.ReadFromBuffer((uint8_t*)"\0", 1);
+		_packet.ReadFromBuffer((uint8_t*)"\0", 1);
+		cursor +=1;
         }
 
 	tmp8 = 0x02; // table Id
-	pBuffer.ReadFromBuffer(&tmp8, 1);
+	_packet.ReadFromBuffer(&tmp8, 1);
 	TSPacket::calCrc(crc, &tmp8, 1);
+	cursor +=1;
 
 	uint16_t tmp16 = 0;
 	uint16_t tmp16_2;
@@ -237,56 +250,56 @@ void TSPacketPMT::CreatePMT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t& maxCu
 	tmp16 |= (sectionLength & 0x3FF);
 	TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&tmp16, 2);
 	TSPacket::calCrc(crc, (uint8_t*)&tmp16_2, 2);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+	_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 	cursor += 2;
 
 	TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&programNum, 2);
 	TSPacket::calCrc(crc, (uint8_t*)&tmp16_2, 2);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+	_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 	cursor += 2;
 
 	tmp8 = 0xC0; //2 first byte = 11
 	tmp8 = versionNumber % 32;
         tmp8 = (tmp8 << 1) + (CurrentNextIndicator & 0x1);
 	TSPacket::calCrc(crc, &tmp8, 1);
-	pBuffer.ReadFromBuffer(&tmp8, 1);
+	_packet.ReadFromBuffer(&tmp8, 1);
 	cursor++;
 
 	tmp8 = 0x00;
 	TSPacket::calCrc(crc, &tmp8, 1);
-	pBuffer.ReadFromBuffer(&tmp8, 1);
+	_packet.ReadFromBuffer(&tmp8, 1);
 	cursor++;
 
 	tmp8 = 0x00;
 	TSPacket::calCrc(crc, &tmp8, 1);
-	pBuffer.ReadFromBuffer(&tmp8, 1);
+	_packet.ReadFromBuffer(&tmp8, 1);
 	cursor++;
 
 	tmp16 = 0xE000;
 	tmp16 |= (pcrPid) ? (pcrPid) : 0x1FFF;
 	TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&tmp16, 2);
 	TSPacket::calCrc(crc, (uint8_t*)&tmp16_2, 2);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+	_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 	cursor += 2;
 
 	tmp16 = 0xF000;
 	tmp16 |= programInfoLength & 0x3FF;
 	TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&tmp16, 2);
 	TSPacket::calCrc(crc, (uint8_t*)&tmp16_2, 2);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+	_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 	cursor += 2;
 
-	std::vector<TSStreamInfo*>::iterator ite = streams.end();
-	for (std::vector<TSStreamInfo*>::iterator it = streams.begin(); it != ite; ++it) {
+	std::vector<TSStreamInfo*>::iterator ite = _programStreamType.end();
+	for (std::vector<TSStreamInfo*>::iterator it = _programStreamType.begin(); it != ite; ++it) {
 		TSPacket::calCrc(crc, &(*it)->streamType, 1);
-		pBuffer.ReadFromBuffer(&(*it)->streamType, 1);
+		_packet.ReadFromBuffer(&(*it)->streamType, 1);
 		cursor++;
 
 		tmp16 = 0xE000;
 		tmp16 |= ((*it)->elementaryPID & 0x1FFF);
 		TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&tmp16, 2);
 		TSPacket::calCrc(crc, (uint8_t*)&tmp16_2, 2);
-		pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+		_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 		cursor += 2;
 
 		tmp16 = 0xF000;
@@ -295,17 +308,31 @@ void TSPacketPMT::CreatePMT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t& maxCu
 		tmp16 |= (infoLength & 0x3FF);
 		TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&tmp16, 2);
 		TSPacket::calCrc(crc, (uint8_t*)&tmp16_2, 2);
-		pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+		_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 		cursor += 2;
 
 		vector<StreamDescriptor>& esDescriptors = (*it)->esDescriptors;
 		for (uint32_t i=0; i < infoLength; ++i) {
+		  //TODO
 			printf("esdiscriptor value = %d\n", esDescriptors[i].type);
 		}
 	}
 	uint32_t tmp32;
 	TSPacket::cpyUgly((uint8_t*)&tmp32, (uint8_t*)&crc, 4);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp32, 4);
+	_packet.ReadFromBuffer((uint8_t*)&tmp32, 4);
+	cursor += 4;
+
+	uint32_t length = GETAVAILABLEBYTESCOUNT(_packet);
+	for (; length < _maxCursor; ++length) {
+		uint8_t tmp8 = '\0';
+		_packet.ReadFromBuffer(&tmp8, 1);
+	}
+
+	if (sendData() == false) {
+		return false;
+	}
+	_packet.IgnoreAll();
+	return true;
 }
 
 #endif	/* HAS_PROTOCOL_TS */
