@@ -26,6 +26,7 @@
 #include "protocols/ts/tspacketpat.h"
 #include "protocols/ts/tspacketpmt.h"
 #include "protocols/ts/tsvideopacket.h"
+#include "protocols/ts/tsaudiopacket.h"
 
 class BaseEncreProtocol;
 
@@ -39,7 +40,8 @@ protected:
 	TSPacketPAT _PAT;
 	TSPacketPMT _PMT;
 	TSVideoPacket _Video;
-	
+	TSAudioPacket _Audio;
+
 public:
 	OutNetTsStream(BaseProtocol *pProtocol, StreamsManager *pStreamsManager, string name);
 	virtual ~OutNetTsStream();

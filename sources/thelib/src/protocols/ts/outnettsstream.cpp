@@ -30,7 +30,7 @@
 
 OutNetTsStream::OutNetTsStream(BaseProtocol *pProtocol,
 			       StreamsManager *pStreamsManager, string name)
-: BaseOutNetStream(pProtocol, pStreamsManager, ST_OUT_NET_TS, name), _timeForPat(0), _firstVideoFrame(true), _firstAudioFrame(true), _AudioPID(69), _PAT(pProtocol), _PMT(pProtocol, 4242), _Video(pProtocol, 68, _PMT.GetProgramStreamType()) {
+: BaseOutNetStream(pProtocol, pStreamsManager, ST_OUT_NET_TS, name), _timeForPat(0), _firstVideoFrame(true), _firstAudioFrame(true), _AudioPID(69), _PAT(pProtocol), _PMT(pProtocol, 4242), _Video(pProtocol, 68, _PMT.GetProgramStreamType()), _Audio(pProtocol, 69, _PMT.GetProgramStreamType()) {
 }
 
 OutNetTsStream::~OutNetTsStream() {
@@ -64,8 +64,7 @@ bool OutNetTsStream::FeedData(uint8_t *pData, uint32_t dataLength,
 
 bool OutNetTsStream::FeedAudioData(uint8_t *pData, uint32_t dataLength,
 		double absoluteTimestamp) {
-	TSPacket packet(_pProtocol, _AudioPID);
-	// return packet.CreatePacket(pData, dataLength, true);
+	return _Audio.CreatePacket(pData, dataLength);
 	return true;
 }
 
