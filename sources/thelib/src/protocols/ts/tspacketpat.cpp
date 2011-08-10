@@ -25,7 +25,8 @@
 
 uint8_t TSPacketPAT::_versionNumber = 31;
 
-TSPacketPAT::TSPacketPAT() {
+TSPacketPAT::TSPacketPAT(BaseProtocol* pProtocol)
+: TSPacket(pProtocol, 0) {
 	//fields
 	_tableId = 0;
 	_sectionSyntaxIndicator = true;
@@ -183,22 +184,25 @@ uint32_t TSPacketPAT::PeekCRC(uint8_t *pBuffer, uint32_t cursor, uint32_t maxCur
 	return ENTOHLP((pBuffer + cursor)); //----MARKED-LONG---
 }
 
-uint8_t* TSPacketPAT::CreatePAT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t maxCursor, map<uint16_t, uint16_t>& pmt) {
-	uint8_t numberOfSection = pmt.size(); // only one program with audio and video
+bool TSPacketPAT::CreatePAT(map<uint16_t, uint16_t>& pmt) {
+	uint8_t numberOfSection = _pmt.size(); // only one program with audio and video
 	uint8_t CurrentNextIndicator = 1;
 	uint8_t lastSectionNumber = 0;
+	uint32_t cursor = 0;
 
+	CreateHeader();
+	cursor += 4;
 	_crc = 0xffffffff;
 
 	uint8_t tmp8 = 0x00;
 	tmp8 = 188 - (cursor + 1 + 8 + numberOfSection * 4 + 4); //PointerFiled
-	pBuffer.ReadFromBuffer(&tmp8, 1);
+	_packet.ReadFromBuffer(&tmp8, 1);
 	for (uint32_t i=0; i < tmp8; ++i) {
-		pBuffer.ReadFromBuffer((uint8_t*)"\0", 1);
+		_packet.ReadFromBuffer((uint8_t*)"\0", 1);
 	}
 
 	tmp8 = 0x00; //tableId
-	pBuffer.ReadFromBuffer(&tmp8, 1);
+	_packet.ReadFromBuffer(&tmp8, 1);
 	TSPacket::calCrc(_crc, &tmp8, 1);
 
 	tmp8 = 0b10110000; // see http://en.wikipedia.org/wiki/Program_Specific_Information#PAT_.28Program_Association_Table.29
@@ -208,28 +212,28 @@ uint8_t* TSPacketPAT::CreatePAT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t ma
 
 	uint16_t tmp16_2;
 	TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&tmp16, 2);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+	_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 	TSPacket::calCrc(_crc, (uint8_t*)&tmp16_2, 2);
 
 	tmp16 = 0;
 	TSPacket::cpyUgly((uint8_t*)&tmp16_2, (uint8_t*)&tmp16, 2);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
+	_packet.ReadFromBuffer((uint8_t*)&tmp16_2, 2);
 	TSPacket::calCrc(_crc, (uint8_t*)&tmp16_2, 2);
 
 	tmp8 = (_versionNumber % 32) << 1;
 	tmp8 |= (CurrentNextIndicator & 0x1);
-	pBuffer.ReadFromBuffer(&tmp8, 1);
+	_packet.ReadFromBuffer(&tmp8, 1);
 	TSPacket::calCrc(_crc, &tmp8, 1);
 
-	pBuffer.ReadFromBuffer(&_sectionNumber, 1);
+	_packet.ReadFromBuffer(&_sectionNumber, 1);
 	TSPacket::calCrc(_crc, &_sectionNumber, 1);
-	pBuffer.ReadFromBuffer(&lastSectionNumber, 1);
+	_packet.ReadFromBuffer(&lastSectionNumber, 1);
 	TSPacket::calCrc(_crc, &lastSectionNumber, 1);
 
 	uint32_t tmp32;
 	uint32_t tmp32_2;
-	map<uint16_t, uint16_t>::iterator it = pmt.begin();
-	map<uint16_t, uint16_t>::iterator ite = pmt.end();
+	map<uint16_t, uint16_t>::iterator it = _pmt.begin();
+	map<uint16_t, uint16_t>::iterator ite = _pmt.end();
 	while (it != ite) {
 		tmp32 = it->second << 16;
 		tmp32 |= (0xE000);
@@ -237,13 +241,23 @@ uint8_t* TSPacketPAT::CreatePAT(IOBuffer& pBuffer, uint32_t& cursor, uint32_t ma
 
 		TSPacket::cpyUgly((uint8_t*)&tmp32_2, (uint8_t*)&tmp32, 4);
 		TSPacket::calCrc(_crc, (uint8_t*)&tmp32_2, 4);
-		pBuffer.ReadFromBuffer((uint8_t*)&tmp32_2, 4);
+		_packet.ReadFromBuffer((uint8_t*)&tmp32_2, 4);
 		++it;
 	}
 
 	TSPacket::cpyUgly((uint8_t*)&tmp32_2, (uint8_t*)&_crc, 4);
-	pBuffer.ReadFromBuffer((uint8_t*)&tmp32_2, 4);
-	return GETIBPOINTER(pBuffer);
+	_packet.ReadFromBuffer((uint8_t*)&tmp32_2, 4);
+
+	uint32_t length = GETAVAILABLEBYTESCOUNT(_packet);
+	for (; length < _maxCursor; ++length) {
+		uint8_t tmp8 = '\0';
+		_packet.ReadFromBuffer(&tmp8, 1);
+	}
+	if (sendData() == false) {
+		return false;
+	}
+	_packet.IgnoreAll();
+	return true;
 }
 
 #endif	/* HAS_PROTOCOL_TS */
