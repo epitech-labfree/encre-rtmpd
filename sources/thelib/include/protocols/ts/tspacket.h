@@ -22,38 +22,38 @@
 
 #include "common.h"
 #include "protocols/baseprotocol.h"
-#include "protocols/ts/inboundtsprotocol.h"
-#include "protocols/ts/tspacketpmt.h"
+//#include "protocols/ts/tspacketpmt.h"
+
+class InboundTSProtocol;
 
 class TSPacket {
 private:
-	IOBuffer _packet;
-
 	uint8_t _syncByte;
 	bool _transportErrorIndicator;
-	bool _payloadUnitStartIndicator;
 	bool _transportPriority;
-	uint16_t _pid;
 	uint8_t _scramblingControl;
-	uint8_t _adaptationFieldExist;
-	uint64_t _dts;
-	vector<TSStreamInfo*> _programStreamType;
-	map<uint16_t, uint16_t> _pmt;
 	BaseProtocol *_pProtocol;
 
 	vector<int> _adaptationFiled; // TODO change type
 	vector<int> _payloadData; // TODO change type
 
+protected:
+	IOBuffer _packet;
+	uint32_t _maxCursor;
+	uint16_t _pid;
+	uint8_t _adaptationFieldExist;
+	bool _payloadUnitStartIndicator;
+	map<uint16_t, uint16_t> _pmt;
+
 public:
-	TSPacket(BaseProtocol *_pProtocol, uint16_t pid, double timestamp);
+	TSPacket(BaseProtocol *_pProtocol, uint16_t pid);
 	virtual ~TSPacket();
 
 	operator string();
-	bool CreatePacket(uint8_t* pData, uint32_t dataLength, bool isAudio, bool pat=false, bool pmt=false);
-	void CreateAdaptationField(uint32_t maxData, uint8_t currentDataToCopy, uint8_t dataLength, uint32_t& cursor, bool pcr);
+	bool CreateHeader();
 	bool sendData();
 	static void cpyUgly(uint8_t* dest, uint8_t* src, uint32_t nb);
-	static map<uint16_t, uint8_t> _continu;
+	std::map<uint16_t, uint8_t> _continu;
 	static void calCrc(uint32_t& crc, uint8_t* buff, uint32_t length);
 };
 

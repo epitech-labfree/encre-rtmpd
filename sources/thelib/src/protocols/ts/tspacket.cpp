@@ -19,14 +19,10 @@
 #ifdef HAS_PROTOCOL_TS
 
 #include "protocols/ts/tspacket.h"
-#include "protocols/ts/tspacketpat.h"
-#include "protocols/ts/tspacketpmt.h"
-#include "protocols/ts/tspacketpes.h"
+#include "protocols/ts/inboundtsprotocol.h"
 #include "streaming/nalutypes.h"
 #include <string.h>
 #include <time.h>
-
-map<uint16_t, uint8_t> TSPacket::_continu;
 
 uint32_t crc32_table[256] =
 {
@@ -96,26 +92,21 @@ uint32_t crc32_table[256] =
   0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4
 };
 
-TSPacket::TSPacket(BaseProtocol* protocol, uint16_t pid, double timestamp) {
+TSPacket::TSPacket(BaseProtocol* protocol, uint16_t pid) {
 	_packet.EnsureSize(188); // size of one packet
 	_syncByte = 0x47; // For synchro
-	_transportErrorIndicator = 0; // TODO : not handle by inbound
+	_transportErrorIndicator = 0; // not handle by inbound
 	_payloadUnitStartIndicator = 1; // start indicator
-	_transportPriority = 0; // TODO : not handle by inbound
+	_transportPriority = 0; // not handle by inbound
 	_pid = pid;
 	_scramblingControl = 0;
-	_adaptationFieldExist = 1; // TODO : only payload
+	_adaptationFieldExist = 1; // only payload
 	_pProtocol = protocol;
 	if (!_continu[_pid]) {
 		_continu[_pid] = 0xF;
 	}
-	_dts = timestamp;
 
-	TSStreamInfo* video = new TSStreamInfo;
-	video->streamType = TS_STREAMTYPE_VIDEO_H264;
-	video->elementaryPID = 68;
-	video->esInfoLength = 0;
-	ADD_VECTOR_END(_programStreamType, video);
+	_maxCursor = 188;
 
 	// TSStreamInfo* audio = new TSStreamInfo;
 	// audio->streamType = TS_STREAMTYPE_AUDIO_AAC;
@@ -126,104 +117,24 @@ TSPacket::TSPacket(BaseProtocol* protocol, uint16_t pid, double timestamp) {
 	_pmt[4242] = 1;
 }
 
+TSPacket::~TSPacket() {
+	_packet.IgnoreAll();
+}
+
 void TSPacket::calCrc(uint32_t& crc, uint8_t* buff, uint32_t length) {
 	for(uint32_t byte = 0; byte < length; ++byte) {
 		crc = (crc << 8) ^ crc32_table[(crc >> 24) ^ (buff[byte])];
 	}
 }
 
-TSPacket::~TSPacket() {
-	_packet.IgnoreAll();
-	for (uint32_t i=0; i < _programStreamType.size(); ++i) {
-		delete _programStreamType[i];
-	}
-}
-
-#include <stdio.h>
 void	TSPacket::cpyUgly(uint8_t* dest, uint8_t* src, uint32_t nb) {
-  for (uint32_t i=0; i < nb; ++i) {
-	dest[i] = src[nb - i - 1];
-  }
-}
-
-void TSPacket::CreateAdaptationField(uint32_t maxData, uint8_t currentDataToCopy, uint8_t dataLength, uint32_t& cursor, bool pcr) {
-	if (pcr) {
-		uint8_t tmp8 = 7 + maxData - currentDataToCopy;
-		_packet.ReadFromBuffer(&tmp8, 1);
-
-		tmp8 = 0x10;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		uint64_t pcr = 9 * _dts / 100;
-		tmp8 = (pcr >> 25) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = (pcr >> 17) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = (pcr >> 9) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = (pcr >> 1) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = ((pcr << 7) & 0x80) | 0x7e;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = 0 & 0x00;
-		_packet.ReadFromBuffer(&tmp8, 1);
-
-		uint32_t i = 0;
-		for(i = 0; i < maxData - currentDataToCopy; ++i) {
-			tmp8 = 0xff;
-			_packet.ReadFromBuffer(&tmp8, 1);
-		}
-		cursor += 8 + i;
-	} else {
-		uint8_t tmp8 = maxData - currentDataToCopy - 1;
-		_packet.ReadFromBuffer(&tmp8, 1);
-
-		tmp8 = 0x00;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		uint32_t i = 0;
-		for(i = 0; i < maxData - dataLength - 2; ++i) {
-			tmp8 = 0xff;
-			_packet.ReadFromBuffer(&tmp8, 1);
-		}
-		cursor += 2 + i;
+	for (uint32_t i=0; i < nb; ++i) {
+		dest[i] = src[nb - i - 1];
 	}
 }
 
-uint64_t getDate() {
-	uint64_t res;
-	struct timespec ts;
-
-	if( clock_gettime( CLOCK_MONOTONIC, &ts ) == EINVAL ) {
-		(void)clock_gettime( CLOCK_REALTIME, &ts );
-	}
-
-	res = ((uint64_t)ts.tv_sec * (uint64_t)1000000)
-	      + (uint64_t)(ts.tv_nsec / 1000);
-	return res;
-}
-
-bool TSPacket::CreatePacket(uint8_t* pData, uint32_t dataLength, bool isAudio, bool pat, bool pmt) {
+bool TSPacket::CreateHeader() {
 	uint32_t header = 0;
-	uint32_t cursor = 0;
-	uint32_t maxCursor = 188; // Max size for the packet
-	bool pcr = (_pid == 68) ? true : false;
-	uint32_t maxData = maxCursor - 4 - 19 - (pcr ? 8 : 0); // packet size - header packet size - PES packet size - adaptation field
-
-	if (!isAudio && dataLength > 1) {
-		dataLength += 3;
-	}
-	if (!isAudio && dataLength > 1 && pData[1] != 0) {
-		dataLength += 1;
-	}
-
-	// 1. Create the header
-	uint8_t currentDataToCopy = (dataLength > maxData) ? maxData : dataLength;
-	if (pcr) {
-		_adaptationFieldExist |= 0x2;
-	} else if (!pat && !pmt && currentDataToCopy < maxData) {
-		_adaptationFieldExist |= 0x2;
-		maxData -= 8; //adaptation field
-	}
-
 	++_continu[_pid];
 	header = _syncByte * 0x01000000;
 	header |= (_transportErrorIndicator & 0x1) * 0x800000;
@@ -237,101 +148,8 @@ bool TSPacket::CreatePacket(uint8_t* pData, uint32_t dataLength, bool isAudio, b
 	uint32_t tmp;
 	cpyUgly((uint8_t*)&tmp, (uint8_t*)&header, 4);
 	_packet.ReadFromBuffer((uint8_t*)&tmp, 4);
-	cursor = 4;
-	_dts = getDate() - 2000;
 
-	// 2. Do the adaptation field if exist
-	if (_adaptationFieldExist & 0x2) {
-		CreateAdaptationField(maxData, currentDataToCopy, dataLength, cursor, pcr);
-	}
-
-	// 3. put the PAT if needed
-	if (pat) {
-		TSPacketPAT packetPAT;
-		packetPAT.CreatePAT(_packet, cursor, maxCursor, _pmt);
-
-		uint32_t length = GETAVAILABLEBYTESCOUNT(_packet);
-		for (; length < maxCursor; ++length) {
-			uint8_t tmp8 = '\0';
-			_packet.ReadFromBuffer(&tmp8, 1);
-		}
-		return sendData();
-	}
-	if (pmt) {
-		TSPacketPMT packetPMT;
-		packetPMT.CreatePMT(_packet, cursor, maxCursor, _programStreamType);
-
-		uint32_t length = GETAVAILABLEBYTESCOUNT(_packet);
-		for (; length < maxCursor; ++length) {
-			uint8_t tmp8 = '\0';
-			_packet.ReadFromBuffer(&tmp8, 1);
-		}
-		return sendData();
-	}
-
-	uint32_t findPacketNumber = 0;
-	findPacketNumber = (dataLength + 19) / 184 + 1;
-
-	// 4. Send the PES
-	uint64_t pts = getDate();
-	TSPacketPES packetPES;
-	packetPES.CreatePESHeader(_packet, cursor, maxCursor, isAudio, pts, _dts, dataLength);
-	if (!isAudio) {
-		// Do the fucking work for h264
-		uint8_t packetStartLol = 0x0;
-		_packet.ReadFromBuffer(&packetStartLol, 1);
-		_packet.ReadFromBuffer(&packetStartLol, 1);
-		cursor += 2;
-		if (pData[1] != 0) {
-			packetStartLol = 0x00;
-			_packet.ReadFromBuffer(&packetStartLol, 1);
-			cursor += 1;
-			dataLength -= 1;
-		}
-		packetStartLol = 0x01;
-		_packet.ReadFromBuffer(&packetStartLol, 1);
-		cursor += 1;
-		dataLength -= 3;
-	}
-
-	uint32_t useDataLength = 0;
-	uint32_t length = (maxCursor - cursor > dataLength - useDataLength) ? dataLength - useDataLength : (maxCursor - cursor);
-	_packet.ReadFromBuffer(pData, length);
-	useDataLength += length;
-	pData += length;
-	cursor += length;
-	for (; cursor < maxCursor; ++cursor) {
-		uint8_t tmp8 = 0xFF;
-		_packet.ReadFromBuffer(&tmp8, 1);
-	}
-	cursor = 4;
-
-	// 5. copy the data in the packets
-	for (; useDataLength < dataLength; ) {
-		++_continu[_pid];
-		_adaptationFieldExist = 0x1;
-
-		header &= 0xFFFFFF00;
-		header |= (_adaptationFieldExist << 4);
-		header |= (_continu[_pid] & 0xF);
-		header &= 0xFFBFFFFF;
-
-		cpyUgly((uint8_t*)&tmp, (uint8_t*)&header, 4);
-		_packet.ReadFromBuffer((uint8_t*)&tmp, 4);
-		cursor = 4;
-
-		length = (maxCursor - cursor > dataLength - useDataLength) ? dataLength - useDataLength : (maxCursor - cursor);
-		_packet.ReadFromBuffer(pData, length);
-		cursor += length;
-		useDataLength += length;
-		pData += length;
-		for (; cursor < maxCursor; ++cursor) {
-			uint8_t tmp8 = 0x00;
-			_packet.ReadFromBuffer(&tmp8, 1);
-		}
-	}
-
-	return sendData();
+	return true;
 }
 
 bool TSPacket::sendData() {
