@@ -102,9 +102,7 @@ TSPacket::TSPacket(BaseProtocol* protocol, uint16_t pid) {
 	_scramblingControl = 0;
 	_adaptationFieldExist = 1; // only payload
 	_pProtocol = protocol;
-	if (!_continu[_pid]) {
-		_continu[_pid] = 0xF;
-	}
+	_continu = 0xF;
 
 	_maxCursor = 188;
 
@@ -135,7 +133,7 @@ void	TSPacket::cpyUgly(uint8_t* dest, uint8_t* src, uint32_t nb) {
 
 bool TSPacket::CreateHeader() {
 	uint32_t header = 0;
-	++_continu[_pid];
+	++_continu;
 	header = _syncByte * 0x01000000;
 	header |= (_transportErrorIndicator & 0x1) * 0x800000;
 	header |= (_payloadUnitStartIndicator & 0x1) * 0x400000;
@@ -143,7 +141,7 @@ bool TSPacket::CreateHeader() {
 	header |= (_pid & 0x1FFF) * 0x100;
 	header |= (_scramblingControl & 0x3) * 0x20;
 	header |= (_adaptationFieldExist & 0x3) * 0x10;
-	header |= (_continu[_pid] & 0xF);
+	header |= (_continu & 0xF);
 
 	uint32_t tmp;
 	cpyUgly((uint8_t*)&tmp, (uint8_t*)&header, 4);

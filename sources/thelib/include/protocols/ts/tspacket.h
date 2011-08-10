@@ -45,6 +45,7 @@ protected:
 	uint16_t _pid;
 	uint8_t _adaptationFieldExist;
 	bool _payloadUnitStartIndicator;
+	uint8_t _continu;
 	map<uint16_t, uint16_t> _pmt;
 
 public:
@@ -55,7 +56,6 @@ public:
 	bool CreateHeader();
 	bool sendData();
 	static void cpyUgly(uint8_t* dest, uint8_t* src, uint32_t nb);
-	std::map<uint16_t, uint8_t> _continu;
 	static void calCrc(uint32_t& crc, uint8_t* buff, uint32_t length);
 };
 
