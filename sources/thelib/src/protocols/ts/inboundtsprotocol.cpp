@@ -347,7 +347,7 @@ bool InboundTSProtocol::ProcessPidTypePAT(uint32_t packetHeader,
 	}
 
 	//2. read the packet
-	TSPacketPAT packetPAT;
+	TSPacketPAT packetPAT(this);
 	if (!packetPAT.Read(pBuffer, cursor, maxCursor)) {
 		FATAL("Unable to read PAT");
 		return false;
@@ -404,7 +404,7 @@ bool InboundTSProtocol::ProcessPidTypePMT(uint32_t packetHeader,
 	}
 
 	//2. read the packet
-	TSPacketPMT packetPMT;
+	TSPacketPMT packetPMT(this, pidDescriptor.pid);
 	if (!packetPMT.Read(pBuffer, cursor, maxCursor)) {
 		FATAL("Unable to read PAT");
 		return false;

@@ -23,6 +23,9 @@
 #define	_OUTNETTSSTREAM_H
 
 #include "streaming/baseoutnetstream.h"
+#include "protocols/ts/tspacketpat.h"
+#include "protocols/ts/tspacketpmt.h"
+#include "protocols/ts/tsvideopacket.h"
 
 class BaseEncreProtocol;
 
@@ -33,7 +36,10 @@ protected:
 	bool _firstVideoFrame;
 	bool _firstAudioFrame;
 	uint32_t _AudioPID;
-	uint32_t _VideoPID;
+	TSPacketPAT _PAT;
+	TSPacketPMT _PMT;
+	TSVideoPacket _Video;
+	
 public:
 	OutNetTsStream(BaseProtocol *pProtocol, StreamsManager *pStreamsManager, string name);
 	virtual ~OutNetTsStream();

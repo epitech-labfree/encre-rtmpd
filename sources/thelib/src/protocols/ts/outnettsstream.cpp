@@ -24,10 +24,13 @@
 #include "streaming/streamstypes.h"
 #include "streaming/nalutypes.h"
 #include "protocols/ts/tspacket.h"
+#include "protocols/ts/tspacketpat.h"
+#include "protocols/ts/tspacketpmt.h"
+#include "protocols/ts/tsvideopacket.h"
 
 OutNetTsStream::OutNetTsStream(BaseProtocol *pProtocol,
 			       StreamsManager *pStreamsManager, string name)
-: BaseOutNetStream(pProtocol, pStreamsManager, ST_OUT_NET_TS, name), _timeForPat(0), _firstVideoFrame(true), _firstAudioFrame(true), _AudioPID(69), _VideoPID(68) {
+: BaseOutNetStream(pProtocol, pStreamsManager, ST_OUT_NET_TS, name), _timeForPat(0), _firstVideoFrame(true), _firstAudioFrame(true), _AudioPID(69), _PAT(pProtocol), _PMT(pProtocol, 4242), _Video(pProtocol, 68, _PMT.GetProgramStreamType()) {
 }
 
 OutNetTsStream::~OutNetTsStream() {
@@ -43,13 +46,13 @@ bool OutNetTsStream::FeedData(uint8_t *pData, uint32_t dataLength,
 	--_timeForPat;
 	if (_timeForPat < 0) {
 		_timeForPat = 50;
-		TSPacket packetpat(_pProtocol, 0, absoluteTimestamp);
-		if (packetpat.CreatePacket(NULL, 0, isAudio, true) == false) {
+		//TODO : a real pmt
+		map<uint16_t, uint16_t> pmt;
+		if (_PAT.CreatePAT(pmt) == false) {
 			return false;
 		}
 
-		TSPacket packetpmt(_pProtocol, 4242, absoluteTimestamp);
-		if (packetpmt.CreatePacket(NULL, 0, isAudio, false, true) == false) {
+		if (_PMT.CreatePMT() == false) {
 			return false;
 		}
 	}
@@ -61,14 +64,14 @@ bool OutNetTsStream::FeedData(uint8_t *pData, uint32_t dataLength,
 
 bool OutNetTsStream::FeedAudioData(uint8_t *pData, uint32_t dataLength,
 		double absoluteTimestamp) {
-	TSPacket packet(_pProtocol, _AudioPID, absoluteTimestamp);
-	return packet.CreatePacket(pData, dataLength, true);
+	TSPacket packet(_pProtocol, _AudioPID);
+	// return packet.CreatePacket(pData, dataLength, true);
+	return true;
 }
 
 bool OutNetTsStream::FeedVideoData(uint8_t *pData, uint32_t dataLength,
 		   double absoluteTimestamp, uint32_t processedLength) {
-	TSPacket packet(_pProtocol, _VideoPID, absoluteTimestamp);
-	return packet.CreatePacket(pData, dataLength, false);
+	return _Video.CreatePacket(pData, dataLength);
 }
 
 void OutNetTsStream::SignalAttachedToInStream() {
