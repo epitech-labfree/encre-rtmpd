@@ -160,4 +160,46 @@ bool TSPacket::sendData() {
 	}
 }
 
+void TSPacket::CreateAdaptationField(uint32_t maxData, uint8_t currentDataToCopy, uint8_t dataLength, uint32_t& cursor, bool pcr, uint64_t dts) {
+	if (pcr) {
+		uint8_t tmp8 = 7 + maxData - currentDataToCopy;
+		_packet.ReadFromBuffer(&tmp8, 1);
+
+		tmp8 = 0x10;
+		_packet.ReadFromBuffer(&tmp8, 1);
+		uint64_t pcr = 9 * dts / 100;
+		tmp8 = (pcr >> 25) & 0xff;
+		_packet.ReadFromBuffer(&tmp8, 1);
+		tmp8 = (pcr >> 17) & 0xff;
+		_packet.ReadFromBuffer(&tmp8, 1);
+		tmp8 = (pcr >> 9) & 0xff;
+		_packet.ReadFromBuffer(&tmp8, 1);
+		tmp8 = (pcr >> 1) & 0xff;
+		_packet.ReadFromBuffer(&tmp8, 1);
+		tmp8 = ((pcr << 7) & 0x80) | 0x7e;
+		_packet.ReadFromBuffer(&tmp8, 1);
+		tmp8 = 0 & 0x00;
+		_packet.ReadFromBuffer(&tmp8, 1);
+
+		uint32_t i = 0;
+		for(i = 0; i < maxData - currentDataToCopy; ++i) {
+			tmp8 = 0xff;
+			_packet.ReadFromBuffer(&tmp8, 1);
+		}
+		cursor += 8 + i;
+	} else {
+		uint8_t tmp8 = maxData - currentDataToCopy - 1;
+		_packet.ReadFromBuffer(&tmp8, 1);
+
+		tmp8 = 0x00;
+		_packet.ReadFromBuffer(&tmp8, 1);
+		uint32_t i = 0;
+		for(i = 0; i < maxData - dataLength - 2; ++i) {
+			tmp8 = 0xff;
+			_packet.ReadFromBuffer(&tmp8, 1);
+		}
+		cursor += 2 + i;
+	}
+}
+
 #endif /* HAS_PROTOCOL_TS */

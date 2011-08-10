@@ -38,6 +38,8 @@ private:
 	vector<int> _payloadData; // TODO change type
 
 protected:
+	void CreateAdaptationField(uint32_t maxData, uint8_t currentDataToCopy, uint8_t dataLength, uint32_t& cursor, bool pcr, uint64_t dts);
+
 	IOBuffer _packet;
 	uint32_t _maxCursor;
 	uint16_t _pid;

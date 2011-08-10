@@ -26,10 +26,10 @@
 
 class TSVideoPacket : public TSPacket {
 private:
-	void CreateAdaptationField(uint32_t maxData, uint8_t currentDataToCopy, uint8_t dataLength, uint32_t& cursor, bool pcr);
 	void H264Cap(uint32_t& cursor, uint8_t* pData, uint32_t& dataLength);
 
 	uint64_t _dts;
+	bool _pcr;
 public:
 	TSVideoPacket(BaseProtocol *_pProtocol, uint16_t pid, std::vector<TSStreamInfo*>& streamType);
 	virtual ~TSVideoPacket();

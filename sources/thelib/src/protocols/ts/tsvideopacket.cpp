@@ -23,6 +23,11 @@
 
 TSVideoPacket::TSVideoPacket(BaseProtocol* protocol, uint16_t pid, std::vector<TSStreamInfo*>& streamType)
 : TSPacket(protocol, pid) {
+	if (streamType.size() == 0) {
+		_pcr = true;
+	} else {
+		_pcr = false;
+	}
 
 	TSStreamInfo* video = new TSStreamInfo;
 	video->streamType = TS_STREAMTYPE_VIDEO_H264;
@@ -47,47 +52,6 @@ uint64_t getDate() {
 	return res;
 }
 
-void TSVideoPacket::CreateAdaptationField(uint32_t maxData, uint8_t currentDataToCopy, uint8_t dataLength, uint32_t& cursor, bool pcr) {
-	if (pcr) {
-		uint8_t tmp8 = 7 + maxData - currentDataToCopy;
-		_packet.ReadFromBuffer(&tmp8, 1);
-
-		tmp8 = 0x10;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		uint64_t pcr = 9 * _dts / 100;
-		tmp8 = (pcr >> 25) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = (pcr >> 17) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = (pcr >> 9) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = (pcr >> 1) & 0xff;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = ((pcr << 7) & 0x80) | 0x7e;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		tmp8 = 0 & 0x00;
-		_packet.ReadFromBuffer(&tmp8, 1);
-
-		uint32_t i = 0;
-		for(i = 0; i < maxData - currentDataToCopy; ++i) {
-			tmp8 = 0xff;
-			_packet.ReadFromBuffer(&tmp8, 1);
-		}
-		cursor += 8 + i;
-	} else {
-		uint8_t tmp8 = maxData - currentDataToCopy - 1;
-		_packet.ReadFromBuffer(&tmp8, 1);
-
-		tmp8 = 0x00;
-		_packet.ReadFromBuffer(&tmp8, 1);
-		uint32_t i = 0;
-		for(i = 0; i < maxData - dataLength - 2; ++i) {
-			tmp8 = 0xff;
-			_packet.ReadFromBuffer(&tmp8, 1);
-		}
-		cursor += 2 + i;
-	}
-}
 
 void TSVideoPacket::H264Cap(uint32_t& cursor, uint8_t* pData, uint32_t& dataLength) {
 	uint8_t packetStartLol = 0x0;
@@ -108,8 +72,9 @@ void TSVideoPacket::H264Cap(uint32_t& cursor, uint8_t* pData, uint32_t& dataLeng
 
 bool TSVideoPacket::CreatePacket(uint8_t* pData, uint32_t dataLength) {
 	uint32_t cursor = 0;
-	uint32_t maxData = _maxCursor - 4 - 19 - 8; // packet size - header packet size - PES packet size - adaptation field
+	uint32_t maxData = _maxCursor - 4 - 19 - (_pcr ? 8 : 0); // packet size - header packet size - PES packet size - adaptation field
 
+	// increase the size for h264 header
 	if (dataLength > 1) {
 		dataLength += 3;
 	}
@@ -118,9 +83,11 @@ bool TSVideoPacket::CreatePacket(uint8_t* pData, uint32_t dataLength) {
 	}
 
 	// 1. Create the header
-	_adaptationFieldExist |= 0x2;
 	uint8_t currentDataToCopy = (dataLength > maxData) ? maxData : dataLength;
-	if (currentDataToCopy < maxData) {
+	if (_pcr) {
+		_adaptationFieldExist |= 0x2;
+	} else if (currentDataToCopy < maxData) {
+		_adaptationFieldExist |= 0x2;
 		maxData -= 8; //adaptation field
 	}
 
@@ -129,7 +96,9 @@ bool TSVideoPacket::CreatePacket(uint8_t* pData, uint32_t dataLength) {
 	_dts = getDate() - 2000;
 
 	// 2. Do the adaptation field
-	CreateAdaptationField(maxData, currentDataToCopy, dataLength, cursor, true);
+	if (_adaptationFieldExist & 0x2) {
+		CreateAdaptationField(maxData, currentDataToCopy, dataLength, cursor, _pcr, _dts);
+	}
 
 	uint32_t findPacketNumber = 0;
 	findPacketNumber = (dataLength + 19) / 184 + 1;
