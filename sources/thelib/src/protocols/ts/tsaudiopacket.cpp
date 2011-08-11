@@ -55,9 +55,9 @@ bool TSAudioPacket::CreatePacket(uint8_t* pData, uint32_t dataLength) {
 	uint32_t maxData = _maxCursor - 4 - 19 - (_pcr ? 8 : 0); // packet size - header packet size - PES packet size - adaptation field
 
 	// increase the size for AAC header
-	if (dataLength > 1) {
-		dataLength += 2;
-	}
+	// if (dataLength > 1) {
+	// 	dataLength += 2;
+	// }
 
 	// 1. Create the header
 	uint8_t currentDataToCopy = (dataLength > maxData) ? maxData : dataLength;
@@ -86,7 +86,7 @@ bool TSAudioPacket::CreatePacket(uint8_t* pData, uint32_t dataLength) {
 	packetPES.CreatePESHeader(_packet, cursor, _maxCursor, false, pts, _dts, dataLength);
 
 	// 5. Do the fucking work for h264
-	AACCap(cursor, pData, dataLength);
+	// AACCap(cursor, pData, dataLength);
 
 	uint32_t useDataLength = 0;
 	uint32_t length = (_maxCursor - cursor > dataLength - useDataLength) ? dataLength - useDataLength : (_maxCursor - cursor);

@@ -65,7 +65,6 @@ bool OutNetTsStream::FeedData(uint8_t *pData, uint32_t dataLength,
 bool OutNetTsStream::FeedAudioData(uint8_t *pData, uint32_t dataLength,
 		double absoluteTimestamp) {
 	return _Audio.CreatePacket(pData, dataLength);
-	return true;
 }
 
 bool OutNetTsStream::FeedVideoData(uint8_t *pData, uint32_t dataLength,
