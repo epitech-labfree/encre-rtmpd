@@ -1,0 +1,6 @@
+Depends of :
+-->libcurl (paquet : libcurl4-openssl-dev)
+-->libboost-all-dev
+
+To build :
+cd ${CRTMPSERVER}/builder/src && ./run
