@@ -91,7 +91,6 @@ bool BaseEncreProtocol::TypeStream(std::string& str)
 	return ret;
 }
 
-// TODO : send data to the 'GET' streams
 bool BaseEncreProtocol::DataToSend(IOBuffer &buffer) {
 	if (_pNearProtocol == 0) {
 		FATAL("The near protocol is not initialized");
