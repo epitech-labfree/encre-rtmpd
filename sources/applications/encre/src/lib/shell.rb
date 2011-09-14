@@ -47,6 +47,7 @@ class Shell < EM::Connection
       eval data
     rescue
       puts "Error #{$!}"
+      puts "Trace is #{$!.backtrace}"
     end
   end
 end

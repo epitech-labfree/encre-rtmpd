@@ -47,8 +47,11 @@ bool        RTMPAppProtocolHandler::AuthenticateInbound(BaseRTMPProtocol *pFrom,
 
 bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom, Variant &request)
 {
-  std::string uid, sid;
+  std::string uid, sid, room;
   Variant params = request["invoke"]["parameters"];
+
+
+  FINEST("InvokeConnect params : %s", STR(params.ToString()));
 
   if (!(BaseRTMPAppProtocolHandler::ProcessInvokeConnect(pFrom, request)
         && HAS_IDX(params, 1)
@@ -61,10 +64,12 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
     return false;
   }
 
+  room = STR(AT(params, 0)["app"]);
+  room = room.substr(room.find('/') + 1);
   uid = STR(AT(AT(params, 1), 0));
-  uid = STR(AT(AT(params, 1), 1));
+  sid = STR(AT(AT(params, 1), 1));
 
-  FINEST("ProcessInvokeConnect (uid, sid) = (%s, %s)", STR(uid), STR(sid));
+  FINEST("ProcessInvokeConnect (uid, sid) in room = (%s, %s) in [%s]", STR(uid), STR(sid), STR(room));
 
   //if (encre().users().exists(uid) && encre().users()[uid].properties()["sid"] == sid)
   {

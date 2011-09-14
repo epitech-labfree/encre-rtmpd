@@ -34,6 +34,7 @@ class RtmpdConnection < EM::Connection
 
   def post_init
     @buffer = String.new
+    @message_callback = nil
     Rtmpd.i.send = Proc.new { |data| send_data data }
     #send_data({:command => "nothinh", :test => 23}.to_json.to_s + "\n")
   end
@@ -42,12 +43,16 @@ class RtmpdConnection < EM::Connection
     data.chomp!
 
     msg = JSON.parse data
-    on_message msg
+    _on_message msg
   end
 
-  def on_message(message)
+  def on_message(&block)
+    @message_callback = block
+  end
+
+  def _on_message(message)
     #puts "Got a message #{message.class}"
-    puts message
+    @message_callback.call(message)
   end
 
   def unbind

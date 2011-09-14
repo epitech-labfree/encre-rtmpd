@@ -35,16 +35,20 @@ class Hash
   end
 
   def __url_map(h, context = [])
-    res = []
+    res = {}
     h.each do |k, v|
       c = context.dup << k
       if v.is_a? Hash
-        res << __url_map(v, c)
+        res.merge!(__url_map(v, c))
       elsif v.respond_to? :to_s
-        res << "#{__context_to_string c}=#{v}"
+        res[__context_to_string c] = v
       end
     end
     res
+  end
+
+  def flatten_for_query
+    __url_map(self)
   end
 
   def url_encode
@@ -56,7 +60,7 @@ class UceEvent
   include Singleton
 
   def initialize
-    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event')
+    @request = nil
     @cred = {}
   end
 
@@ -67,8 +71,9 @@ class UceEvent
   def on_login(uid, sid)
     @cred[:uid] = uid
     @cred[:sid] = sid
+    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event')
     #test_event 'test' => 1, 'test2' => {'subtest1' => 1, 'subtest2' => 2}
-    test_event 'test' => 1, 'test2' => 2
+    #event 'test_event', { 'test' => 1, 'test2' => 2 }
   end
 
   def on_error(type, metadata)
@@ -81,15 +86,16 @@ class UceEvent
     # send_event(type, metadata)
   end
 
-  def send_event(type, metadata)
-    query = @cred.merge({'type' => type, 'metadata' => metadata})
+  def event(type, metadata)
+    meta = {'metadata' => metadata}.flatten_for_query
+    query = @cred.merge({'type' => type}).merge(meta)
     pipe = @request.post :keepalive => true, :query => query
     pipe.errback { on_error type, metadata }
     pipe.callback { on_response pipe, type, metadata }
   end
 
-  def method_missing(sym, *args)
-    send_event(sym.to_s, args[0])
-  end
+   def method_missing(sym, *args)
+     self.event(sym.to_s, args[0])
+   end
 end
 

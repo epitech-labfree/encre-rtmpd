@@ -40,17 +40,11 @@ $log = Conf.i.logger
 $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
 
 
-#uce = UCEngine.new(:logger => $log, :uid => 'encre-video', :token => '123456')
-#rtmpd = Rtmpd.new(:logger => $log, :port => 2342)
-
-#rtmpd.cmd({:command => "user.new", :pwet => 98765431})
-#rtmpd.user_new("user_uid", "user_sid")
-#rtmpd.user_del("test_uid")
-
 EM.run do
-  #EM.connect Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection
+  EM.connect Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection
   EM.open_keyboard Shell
   UceLogin.new(Proc.new { |uid, sid| puts "Connected with #{uid}, #{sid}"},
                Proc.new { |u, s| UceLongPoller.i.on_login(u, s) },
                Proc.new { |u, s| UceEvent.i.on_login(u, s) })
 end
+
