@@ -41,7 +41,7 @@ bool Encre2Application::Initialize() {
 	RegisterAppProtocolHandler(PT_TCP, _pEncreHandler);
 	RegisterAppProtocolHandler(PT_INBOUND_ENCRE, _pEncreHandler);
 #endif /* HAS_PROTOCOL_ENCRE */
-#ifdef HAS_PROTOCOL_ENCRE
+#ifdef HAS_PROTOCOL_TS
 	_pTSHandler = new TSAppProtocolHandler(_configuration);
 	RegisterAppProtocolHandler(PT_INBOUND_TS, _pTSHandler);
 #endif /* HAS_PROTOCOL_TS */

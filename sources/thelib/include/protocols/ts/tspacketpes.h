@@ -1,6 +1,5 @@
-/*
- *  Copyright (c) 2010,
- *  Gavriloaie Eugen-Andrei (shiretu@gmail.com)
+/* 
+ *  Copyright (c) 2011,
  *
  *  This file is part of crtmpserver.
  *  crtmpserver is free software: you can redistribute it and/or modify
@@ -17,20 +16,22 @@
  *  along with crtmpserver.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAS_PROTOCOL_ENCRE
-#ifndef _INBOUNDBASEENCREPROTOCOL_H
-#define	_INBOUNDBASEENCREPROTOCOL_H
 
-#include "protocols/encre/baseencreprotocol.h"
+#ifdef HAS_PROTOCOL_TS
+#ifndef _TSPACKETPES_H
+#define	_TSPACKETPES_H
 
-class InboundEncreProtocol
-: public BaseEncreProtocol {
+#include "common.h"
+
+class TSPacketPES {
+private:
+
 public:
-	InboundEncreProtocol();
-	virtual			~InboundEncreProtocol();
-
+	TSPacketPES();
+	virtual ~TSPacketPES();
+	void CreatePESHeader(IOBuffer& buffer, uint32_t& cursor, uint32_t maxCursor, bool isAudio, uint64_t& pts, uint64_t& dts, uint32_t size);
 };
 
+#endif	/* _TSPACKETPAT_H */
+#endif	/* HAS_PROTOCOL_TS */
 
-#endif	/* _BASEINBOUNDENCREPROTOCOL_H */
-#endif /* HAS_PROTOCOL_ENCRE */

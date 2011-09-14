@@ -20,6 +20,7 @@
 
 #ifdef HAS_PROTOCOL_TS
 #include "streaming/basestream.h"
+#include "streaming/streamstypes.h"
 #include "application/clientapplicationmanager.h"
 #include "protocols/ts/inboundtsprotocol.h"
 #include "protocols/ts/tspacketpat.h"
@@ -27,6 +28,7 @@
 #include "protocols/ts/basetsappprotocolhandler.h"
 #include "protocols/ts/innettsstream.h"
 #include "protocols/ts/tsboundscheck.h"
+#include "protocols/encre/baseencreprotocol.h"
 #include "protocols/rtmp/header_le_ba.h"
 
 InboundTSProtocol::InboundTSProtocol()
@@ -80,6 +82,8 @@ InboundTSProtocol::InboundTSProtocol()
 	_chunkSizeDetectionCount = 0;
 
 	_stepByStep = false;
+
+	_pOutStream = NULL;
 }
 
 InboundTSProtocol::~InboundTSProtocol() {
@@ -89,6 +93,10 @@ InboundTSProtocol::~InboundTSProtocol() {
 		FreePidDescriptor(MAP_VAL(i));
 	}
 	_pidMapping.clear();
+
+	if (_pOutStream != NULL) {
+		delete _pOutStream;
+	}
 }
 
 bool InboundTSProtocol::Initialize(Variant &parameters) {
@@ -111,6 +119,30 @@ bool InboundTSProtocol::SignalInputData(int32_t recvAmount) {
 }
 
 bool InboundTSProtocol::SignalInputData(IOBuffer &buffer) {
+	if (_pFarProtocol && _pFarProtocol->GetCustomParameters()["streamType"] == V_STRING
+	    && std::string(_pFarProtocol->GetCustomParameters()["streamType"]) == "Receiver") {
+			std::string name;
+				if (_pFarProtocol && _pFarProtocol->GetCustomParameters()["streamName"] == V_STRING) {
+					name = std::string(_pFarProtocol->GetCustomParameters()["streamName"]);
+				} else {
+					name = format("ts_%u_0_0", GetId());
+				}
+
+			_pOutStream = new OutNetTsStream(this, GetApplication()->GetStreamsManager(), name);
+			map<uint32_t, BaseStream *> existingStreams =
+				GetApplication()->GetStreamsManager()->FindByTypeByName(
+				ST_IN_NET_TS, name, false, false);
+			if (existingStreams.size() > 0) {
+				FOR_MAP(existingStreams, uint32_t, BaseStream *, i) {
+					InNetTSStream *pTempStream = (InNetTSStream *) MAP_VAL(i);
+					if (pTempStream->GetProtocol() != NULL) {
+						_pOutStream->Link(pTempStream);
+					}
+				}
+			}
+		return true;
+	}
+
 	if (_chunkSize == 0) {
 		if (!DetermineChunkSize(buffer)) {
 			FATAL("Unable to determine chunk size");
@@ -315,7 +347,7 @@ bool InboundTSProtocol::ProcessPidTypePAT(uint32_t packetHeader,
 	}
 
 	//2. read the packet
-	TSPacketPAT packetPAT;
+	TSPacketPAT packetPAT(this);
 	if (!packetPAT.Read(pBuffer, cursor, maxCursor)) {
 		FATAL("Unable to read PAT");
 		return false;
@@ -372,7 +404,7 @@ bool InboundTSProtocol::ProcessPidTypePMT(uint32_t packetHeader,
 	}
 
 	//2. read the packet
-	TSPacketPMT packetPMT;
+	TSPacketPMT packetPMT(this, pidDescriptor.pid);
 	if (!packetPMT.Read(pBuffer, cursor, maxCursor)) {
 		FATAL("Unable to read PAT");
 		return false;
@@ -424,13 +456,19 @@ bool InboundTSProtocol::ProcessPidTypePMT(uint32_t packetHeader,
 
 	//4. Compute the stream name
 	string streamName = "";
-	if (GetCustomParameters().HasKeyChain(V_STRING, true, 1, "localStreamName"))
+	if (GetCustomParameters().HasKeyChain(V_STRING, true, 1, "localStreamName")) {
 		streamName = (string) GetCustomParameters()["localStreamName"];
-	else
+	}
+	else if (_pFarProtocol && _pFarProtocol->GetCustomParameters()["streamName"] == V_STRING) {
+		streamName = std::string(_pFarProtocol->GetCustomParameters()["streamName"]);
+	}
+	else {
 		streamName = format("ts_%u_%hu_%hu", GetId(), audioPid, videoPid);
+	}
 
 	//4. Create the stream if we have at least videoPid or audioPid
 	InNetTSStream *pStream = NULL;
+
 	if ((videoPid != 0) || (audioPid != 0)) {
 		pStream = new InNetTSStream(this, GetApplication()->GetStreamsManager(),
 				streamName);
@@ -489,5 +527,10 @@ bool InboundTSProtocol::ProcessPidTypePMT(uint32_t packetHeader,
 
 	return true;
 }
-#endif	/* HAS_PROTOCOL_TS */
 
+bool InboundTSProtocol::SendRawData(uint8_t *pData, uint32_t length) {
+	if ((BaseEncreProtocol*)_pFarProtocol != NULL)
+		return ((BaseEncreProtocol*)_pFarProtocol)->SendRawData(pData, length);
+	return true;
+}
+#endif	/* HAS_PROTOCOL_TS */

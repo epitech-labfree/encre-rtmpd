@@ -1,6 +1,5 @@
-/*
- *  Copyright (c) 2010,
- *  Gavriloaie Eugen-Andrei (shiretu@gmail.com)
+/* 
+ *  Copyright (c) 2011,
  *
  *  This file is part of crtmpserver.
  *  crtmpserver is free software: you can redistribute it and/or modify
@@ -17,20 +16,25 @@
  *  along with crtmpserver.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAS_PROTOCOL_ENCRE
-#ifndef _INBOUNDBASEENCREPROTOCOL_H
-#define	_INBOUNDBASEENCREPROTOCOL_H
+#ifdef HAS_PROTOCOL_TS
+#ifndef _TSVIDEOPACKET_H
+#define	_TSVIDEOPACKET_H
 
-#include "protocols/encre/baseencreprotocol.h"
+#include "common.h"
+#include "protocols/ts/tspacket.h"
+#include "protocols/ts/tspacketpmt.h"
 
-class InboundEncreProtocol
-: public BaseEncreProtocol {
+class TSVideoPacket : public TSPacket {
+private:
+	void H264Cap(uint32_t& cursor, uint8_t* pData, uint32_t& dataLength);
+
+	uint64_t _dts;
+	bool _pcr;
 public:
-	InboundEncreProtocol();
-	virtual			~InboundEncreProtocol();
-
+	TSVideoPacket(BaseProtocol *_pProtocol, uint16_t pid, std::vector<TSStreamInfo*>& streamType);
+	virtual ~TSVideoPacket();
+	bool CreatePacket(uint8_t* pData, uint32_t dataLength);
 };
 
-
-#endif	/* _BASEINBOUNDENCREPROTOCOL_H */
-#endif /* HAS_PROTOCOL_ENCRE */
+#endif	/* _TSVIDEOPACKET_H */
+#endif	/* HAS_PROTOCOL_TS */

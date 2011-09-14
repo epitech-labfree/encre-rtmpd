@@ -22,11 +22,13 @@ INCLUDE_DIRECTORIES(
 ADD_LIBRARY(${PROJECT_NAME} ${LIB_TYPE} ${SOURCES})
 ADD_PRECOMPILED_HEADER(${PROJECT_NAME} "${CRTMPSERVER_SOURCES_ROOT}/common/include/common.h")
 IF(${LIB_TYPE} MATCHES "SHARED")
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} common ${DL_LIBRARY_PATH} ${OPENSSL_LIBRARY_PATH} ${CRYPTO_LIBRARY_PATH})
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME} 
 		common 
 		${DL_LIBRARY_PATH} 
 		${OPENSSL_LIBRARY_PATH} 
 		${CRYPTO_LIBRARY_PATH} 
+		-lrt
 		#/opt/local/lib/libiconv.dylib
 		#/Users/shiretu/work/ffmpeg_bin/lib/libavcodec.dylib
 		#/Users/shiretu/work/ffmpeg_bin/lib/libavformat.dylib

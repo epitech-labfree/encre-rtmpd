@@ -23,11 +23,14 @@
 #define	_TSPACKETPAT_H
 
 #include "common.h"
+#include "protocols/ts/tspacket.h"
+#include "protocols/baseprotocol.h"
 
 //iso13818-1.pdf page 61/174
 //Table 2-25 – Program association section
 
-class TSPacketPAT {
+class TSPacketPAT
+: public TSPacket {
 private:
 	//fields
 	uint8_t _tableId;
@@ -37,7 +40,7 @@ private:
 	uint16_t _sectionLength;
 	uint16_t _transportStreamId;
 	uint8_t _reserved3;
-	uint8_t _versionNumber;
+	static uint8_t _versionNumber;
 	bool _currentNextIndicator;
 	uint8_t _sectionNumber;
 	uint8_t _lastSectionNumber;
@@ -49,14 +52,15 @@ private:
 	uint32_t _entriesCount;
 	map<uint16_t, uint16_t> _networkPids;
 	map<uint16_t, uint16_t> _programPids;
+
 public:
-	TSPacketPAT();
+	TSPacketPAT(BaseProtocol* protocol);
 	virtual ~TSPacketPAT();
 
 	operator string();
 
 	bool Read(uint8_t *pBuffer, uint32_t &cursor, uint32_t maxCursor);
-
+	bool CreatePAT(map<uint16_t, uint16_t>& pmt);
 	map<uint16_t, uint16_t> &GetPMTs();
 	map<uint16_t, uint16_t> &GetNITs();
 	uint32_t GetCRC();

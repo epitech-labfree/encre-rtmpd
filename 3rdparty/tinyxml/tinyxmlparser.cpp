@@ -404,7 +404,7 @@ const char* TiXmlBase::GetEntity(const char* p, char* value, int* length, TiXmlE
 
     if (*(p + 1) && *(p + 1) == '#' && *(p + 2)) {
         unsigned long ucs = 0;
-        ptrdiff_t delta = 0;
+	std::ptrdiff_t delta = 0;
         unsigned mult = 1;
 
         if (*(p + 2) == 'x') {

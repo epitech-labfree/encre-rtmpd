@@ -22,12 +22,35 @@
 #define	_BASEENCREPROTOCOL_H
 
 #include "protocols/baseprotocol.h"
+#include "protocols/encre/baseencreappprotocolhandler.h"
 
 class DLLEXP BaseEncreProtocol
 : public BaseProtocol {
+protected:
+	IOBuffer		_outputBuffer;
 public:
 	BaseEncreProtocol(uint64_t protocolType);
 	virtual ~BaseEncreProtocol();
+
+	virtual bool			AllowFarProtocol(uint64_t type);
+	virtual bool			AllowNearProtocol(uint64_t type);
+	virtual bool			SignalInputData(int32_t recvAmount);
+	virtual bool			SignalInputData(IOBuffer &buffer);
+	virtual bool			Initialize(Variant &parameters);
+	virtual IOBuffer*		GetOutputBuffer();
+	virtual void			SetApplication(BaseClientApplication *pApplication);
+	bool				SendRawData(uint8_t *buffer, uint32_t length);
+
+private:
+	bool				DataToSend(IOBuffer &buffer);
+	bool				TypeStream(std::string&);
+
+	bool				_bTypeStream;
+	bool				_bSender;
+	bool				_bReceiver;
+	std::string			_bStreamName;
+
+	BaseEncreAppProtocolHandler*	_pProtocolHandler;
 };
 
 #endif	/* _BASEENCREPROTOCOL_H */

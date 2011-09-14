@@ -138,6 +138,11 @@ configuration=
 			{
 				{
 					ip="0.0.0.0",
+					port=4242,
+					protocol="inboundEncreTS",
+				},
+				{
+					ip="0.0.0.0",
 					port=4243,
 					protocol="inboundEncreTS",
 				},
