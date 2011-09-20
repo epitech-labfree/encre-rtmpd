@@ -30,12 +30,13 @@ require 'em-http'
 class UceLongPoller
   include Singleton
 
-  attr_accessor :types
+  attr_accessor :types, :handlers
 
   def initialize
     @request = EM::HttpRequest.new(Conf.i.uce_url + '/event')
     @connection = nil
     @last_time = nil
+    @handlers = {}
     @cred = {}
 
     @types = [] # 'internal.meeting.add'
@@ -68,7 +69,18 @@ class UceLongPoller
     else
       r = JSON.parse @connection.response
       r['result'].each do |event|
-        puts "Received and event : #{event}"
+        if @handlers.has_key? event["type"]
+          h = @handlers[event["type"]]
+          if h.respond_to? :each
+            h.each { |p| p.call event }
+          elsif h.respond_to? :call
+            h.call event
+          else
+            puts "Wrong event handler for type : #{event["type"]}, event is #{event}"
+          end
+        else
+          puts "Received an unhandled event : #{event}"
+        end
         @time = event['datetime'].to_i + 1 if event['datetime'] >= @time
       end
     end
