@@ -21,12 +21,14 @@
 #include "rtmpappprotocolhandler.h"
 #include "cli_handler.h"
 #include "protocols/rtmp/messagefactories/messagefactories.h"
+#include "rtmp_request.h"
+
 using namespace app_encre;
 
 RTMPAppProtocolHandler::RTMPAppProtocolHandler(Variant &configuration)
 : BaseRTMPAppProtocolHandler(configuration) {
 
-}
+ }
 
 RTMPAppProtocolHandler::~RTMPAppProtocolHandler() {
 }
@@ -36,27 +38,14 @@ EncreApplication &RTMPAppProtocolHandler::encre()
   return *dynamic_cast<EncreApplication *>(GetApplication());
 }
 
-
-bool        RTMPAppProtocolHandler::AuthenticateInbound(BaseRTMPProtocol *pFrom, Variant &request,
-                                                        Variant &authState)
-{
-  FINEST("AuthenticateInbound");
-
-  return true;
-}
-
 bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom, Variant &request)
 {
-  std::string uid, sid, room;
-  Variant params = request["invoke"]["parameters"];
+  rtmp_connect  r(request["invoke"]["parameters"]);
 
-
-  FINEST("InvokeConnect params : %s", STR(params.ToString()));
+  FINEST("InvokeConnect params : %s", STR(request.ToString()));
 
   if (!(BaseRTMPAppProtocolHandler::ProcessInvokeConnect(pFrom, request)
-        && HAS_IDX(params, 1)
-        && HAS_IDX(AT(params, 1), 0)
-        && HAS_IDX(AT(params, 1), 1)))
+        && r.is_valid()))
   {
     WARN("ProcessInvokeConnect: Wrong number of parameters");
     // FIXME The nice way ??
@@ -64,18 +53,18 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
     return false;
   }
 
-  room = STR(AT(params, 0)["app"]);
-  room = room.substr(room.find('/') + 1);
-  uid = STR(AT(AT(params, 1), 0));
-  sid = STR(AT(AT(params, 1), 1));
-
-  FINEST("ProcessInvokeConnect (uid, sid) in room = (%s, %s) in [%s]", STR(uid), STR(sid), STR(room));
+  FINEST("ProcessInvokeConnect (uid, sid) in room = (%s, %s) in [%s]",
+         STR(r.p("uid")), STR(r.p("sid")), STR(r.p("room")));
 
   //if (encre().users().exists(uid) && encre().users()[uid].properties()["sid"] == sid)
   {
     FINEST("User authenticated");
     // FIXME I'm working on this. LEAK
     encre().cli().SendControllerMessage(*(new Variant("Client is connected, test message")));
+
+    pFrom->GetCustomParameters()["uid"] = r.p("uid");
+    pFrom->GetCustomParameters()["sid"] = r.p("sid");
+    pFrom->GetCustomParameters()["room"] = r.p("room");
     return true;
   }
   // else
@@ -86,22 +75,43 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
   // }
 }
 
-bool        RTMPAppProtocolHandler::ProcessInvokeCreateStream(BaseRTMPProtocol *pFrom,
-                                                              Variant &request)
+bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
+                                                         Variant &request)
 {
-  BaseRTMPAppProtocolHandler::ProcessInvokeCreateStream(pFrom, request);
+  rtmp_publish  r(request["invoke"]["parameters"]);
 
-  FINEST("ProcessInvokeCreateStream");
+  if (!(BaseRTMPAppProtocolHandler::ProcessInvokePublish(pFrom, request)
+        && r.is_valid()))
+  {
+    WARN("ProcessInvokePublish: Wrong number of parameters");
+    // FIXME The nice way ??
+    pFrom->GracefullyEnqueueForDelete();
+    return false;
+  }
+
+  FINEST("ProcessInvokePublish: from %s in room '%s' (%s, %s)\n%s",
+         STR(pFrom->GetCustomParameters()["uid"]),
+         STR(pFrom->GetCustomParameters()["room"]),
+         STR(r.p("stream_name")), STR(r.p("stream_mode")),
+         STR(request.ToString("", 1)));
 
   return true;
 }
 
-  bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
-                                                         Variant &request)
+bool        RTMPAppProtocolHandler::ProcessInvokePlay(BaseRTMPProtocol *pFrom,
+                                                      Variant &request)
 {
-  BaseRTMPAppProtocolHandler::ProcessInvokePublish(pFrom, request);
+  rtmp_play r(request["invoke"]["parameters"]);
 
-  FINEST("ProcessInvokePublish: \n%s", STR(request.ToString("", 1)));
+  if (!(BaseRTMPAppProtocolHandler::ProcessInvokePlay(pFrom, request)
+        && r.is_valid()))
+  {
+    WARN("ProcessInvokePlay: Wrong number of parameters");
+    pFrom->GracefullyEnqueueForDelete();
+    return false;
+  }
+
+  FINEST("ProcessInvokePlay: \n%s", STR(request.ToString("", 1)));
 
   return true;
 }

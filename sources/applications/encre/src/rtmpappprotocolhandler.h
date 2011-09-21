@@ -44,13 +44,11 @@ namespace app_encre {
 
     EncreApplication    &encre();
 
-    virtual bool        AuthenticateInbound(BaseRTMPProtocol *pFrom, Variant &request,
-                                            Variant &authState);
     virtual bool        ProcessInvokeConnect(BaseRTMPProtocol *pFrom, Variant &request);
-    virtual bool        ProcessInvokeCreateStream(BaseRTMPProtocol *pFrom,
-                                                  Variant &request);
     virtual bool        ProcessInvokePublish(BaseRTMPProtocol *pFrom,
                                              Variant &request);
+    virtual bool        ProcessInvokePlay(BaseRTMPProtocol *pFrom,
+                                          Variant &request);
   };
 }
 #endif	/* _RTMPAPPPROTOCOLHANDLER_H */

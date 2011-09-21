@@ -46,6 +46,13 @@ class has_properties
   properties_map                        m_props;
 };
 
+/* class meeting : public has_properties */
+/* { */
+/*  public: */
+/*   meeting() {} */
+/*   meeting(std::string name); */
+/* }; */
+
 class stream : public has_properties
 {
  public:
