@@ -96,6 +96,7 @@ bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom
          STR(request.ToString("", 1)));
 
   Variant cli_msg;
+  cli_msg["type"] = "publish";
   cli_msg["uid"] = pFrom->GetCustomParameters()["uid"];
   cli_msg["room"] = pFrom->GetCustomParameters()["room"];
   cli_msg["stream_name"] = r.p("stream_name");

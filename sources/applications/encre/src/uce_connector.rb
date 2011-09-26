@@ -47,9 +47,20 @@ $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
 #   exit 0
 # end
 
+def rtmpd_event_handler(e)
+  puts "##################3"
+  puts e
+  if e["data"]["type"] == "publish"
+    puts "publish"
+    UceEvent.i.ev_stream_started({ :user_uid => e["data"]["uid"],
+                                   :room => e["data"]["room"],
+                                   :name => e["data"]["stream_name"]})
+
+  end
+end
 
 EM.run do
-  EM.connect(Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection)
+  EM.connect(Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection).on_message { |e| rtmpd_event_handler e }
   EM.open_keyboard Shell
   UceLogin.new(Proc.new { |uid, sid| puts "Connected with #{uid}, #{sid}"},
                Proc.new { |u, s| UceLongPoller.i.on_login(u, s) },

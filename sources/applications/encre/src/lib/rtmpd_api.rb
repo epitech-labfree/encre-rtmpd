@@ -51,7 +51,6 @@ class RtmpdConnection < EM::Connection
   end
 
   def _on_message(message)
-    puts message
     @message_callback.call(message) if @message_callback
   end
 
