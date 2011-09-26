@@ -36,15 +36,24 @@ require 'uce_longpoller'
 require 'rtmpd_api'
 require 'shell'
 
+require 'profiler'
+
 $log = Conf.i.logger
 $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
 
+# Profiler__::start_profile
+# Signal.trap('SIGINT') do
+#   Profiler__.print_profile STDOUT
+#   exit 0
+# end
+
 
 EM.run do
-  EM.connect Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection
+  EM.connect(Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection)
   EM.open_keyboard Shell
   UceLogin.new(Proc.new { |uid, sid| puts "Connected with #{uid}, #{sid}"},
                Proc.new { |u, s| UceLongPoller.i.on_login(u, s) },
                Proc.new { |u, s| UceEvent.i.on_login(u, s) })
 end
 
+#Profiler__.print_profile STDOUT

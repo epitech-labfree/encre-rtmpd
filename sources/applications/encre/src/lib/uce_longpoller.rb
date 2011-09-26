@@ -49,13 +49,15 @@ class UceLongPoller
 
   def start
     if @time
-      #puts "Launching poller request"
+      #Conf.i.logger.debug "Launching poller request"
       query = @cred.merge({'type' => @types.join(','),
         'start' => @time, '_async' => 'lp'})
 
       @connection = @request.get :query => query, :inactivity_timeout => 0
       @connection.callback {on_events}
-      @connection.errback {start}
+      @connection.errback do |error|
+        EM::Timer.new(1) { start }
+      end
     else
       get_time
     end
@@ -65,7 +67,7 @@ class UceLongPoller
     s = @connection.response_header.status.to_i
 
     if s < 200 and s >= 300
-      EM::Timer.new(1) { start }
+      EM::Timer.new(1) { Cong.i.logger.debug "UceLongPoller returned #{s}"; start }
     else
       r = JSON.parse @connection.response
       r['result'].each do |event|

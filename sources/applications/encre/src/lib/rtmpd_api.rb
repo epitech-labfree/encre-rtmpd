@@ -51,15 +51,15 @@ class RtmpdConnection < EM::Connection
   end
 
   def _on_message(message)
-    #puts "Got a message #{message.class}"
-    @message_callback.call(message)
+    puts message
+    @message_callback.call(message) if @message_callback
   end
 
   def unbind
-    Conf.i.logger.warn "Connection to Rtmpd closed"
+    Conf.i.logger.warn "Connection to Rtmpd closed :/"
     EM::Timer.new(1) do
       Conf.i.logger.warn "Trying to reconnect to Rtmpd"
-      EM.connect Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection
+      EM.connect(Conf.i.rtmpd_server, Conf.i.rtmpd_port, RtmpdConnection)
     end
   end
 end

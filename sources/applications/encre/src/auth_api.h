@@ -28,27 +28,7 @@
 
 namespace app_encre
 {
-class auth
-{
- public:
-  enum stage
-  {
-    UNKOWN,
-    CONNECT,
-    PUBLISH,
-    PLAY
-  };
-
-  virtual bool  authorize(stage id, Variant &request) = 0;
-};
-
-class encre_auth : public auth
-{
- public:
-  encre_auth(
-
-  virtual bool  authorize(stage id, Variant &request);
-};
+class aut
 }
 
 #endif 	    /* !AUTH_API_H_ */

@@ -29,25 +29,22 @@
 
 namespace app_encre
 {
-  rtmp_request::rtmp_request(Variant &request)
-    : m_request(request)
+  rtmp_request::rtmp_request(Variant &request, BaseRTMPProtocol *conn)
+    : m_request(request), m_conn(conn)
   {
   }
 
   rtmp_request::rtmp_request(const rtmp_request &req)
-    : m_request(req.m_request)
+    : m_request(req.m_request), m_conn(req.m_conn)
   {
   }
-
-
-
 
 /*******************************
  * Rtmp InvokeConnect Request
  */
 
-  rtmp_connect::rtmp_connect(Variant &request)
-    : rtmp_request(request)
+  rtmp_connect::rtmp_connect(Variant &request, BaseRTMPProtocol *conn)
+    : rtmp_request(request, conn)
   {
   }
 
@@ -112,8 +109,8 @@ namespace app_encre
     </MAP>
  */
 
-  rtmp_publish::rtmp_publish(Variant &request)
-    : rtmp_request(request)
+  rtmp_publish::rtmp_publish(Variant &request, BaseRTMPProtocol *conn)
+    : rtmp_request(request, conn)
   {
   }
 
@@ -148,8 +145,8 @@ namespace app_encre
  * Rtmp InvokePlay Request
  */
 
-  rtmp_play::rtmp_play(Variant &request)
-    : rtmp_request(request)
+  rtmp_play::rtmp_play(Variant &request, BaseRTMPProtocol *conn)
+    : rtmp_request(request, conn)
   {
   }
 

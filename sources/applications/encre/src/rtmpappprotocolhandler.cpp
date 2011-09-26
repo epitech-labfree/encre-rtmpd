@@ -40,7 +40,7 @@ EncreApplication &RTMPAppProtocolHandler::encre()
 
 bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom, Variant &request)
 {
-  rtmp_connect  r(request["invoke"]["parameters"]);
+  rtmp_connect  r(request["invoke"]["parameters"], pFrom);
 
   FINEST("InvokeConnect params : %s", STR(request.ToString()));
 
@@ -78,7 +78,7 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
 bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
                                                          Variant &request)
 {
-  rtmp_publish  r(request["invoke"]["parameters"]);
+  rtmp_publish  r(request["invoke"]["parameters"], pFrom);
 
   if (!(BaseRTMPAppProtocolHandler::ProcessInvokePublish(pFrom, request)
         && r.is_valid()))
@@ -95,13 +95,19 @@ bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom
          STR(r.p("stream_name")), STR(r.p("stream_mode")),
          STR(request.ToString("", 1)));
 
+  Variant cli_msg;
+  cli_msg["uid"] = pFrom->GetCustomParameters()["uid"];
+  cli_msg["room"] = pFrom->GetCustomParameters()["room"];
+  cli_msg["stream_name"] = r.p("stream_name");
+  encre().cli().SendControllerMessage(cli_msg);
+
   return true;
 }
 
 bool        RTMPAppProtocolHandler::ProcessInvokePlay(BaseRTMPProtocol *pFrom,
                                                       Variant &request)
 {
-  rtmp_play r(request["invoke"]["parameters"]);
+  rtmp_play r(request["invoke"]["parameters"], pFrom);
 
   if (!(BaseRTMPAppProtocolHandler::ProcessInvokePlay(pFrom, request)
         && r.is_valid()))

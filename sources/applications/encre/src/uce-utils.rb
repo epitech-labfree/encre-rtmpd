@@ -51,10 +51,12 @@ $sid = res["sid"]
 
 puts "Logged with uid,sid = #{$uid},#{$sid}"
 
-url = uce_url "/meeting/all?name=test_uce_connector_#{rand 999999}"
+#url = uce_url "/meeting/all?name=test_uce_connector_#{rand 999999}"
+url = uce_url "/event?type=test_uce_connector_&metadata[rand]=#{rand 999999}"
 puts url
 res = JSON.parse(RestClient.post url, "")
 puts res
+
 
 
 

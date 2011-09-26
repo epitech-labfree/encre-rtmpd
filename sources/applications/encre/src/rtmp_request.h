@@ -34,7 +34,7 @@ namespace app_encre
   class rtmp_request
   {
   public:
-    rtmp_request(Variant &request);
+    rtmp_request(Variant &request, BaseRTMPProtocol *conn);
     rtmp_request(const rtmp_request &);
     virtual ~rtmp_request(){};
 
@@ -46,12 +46,13 @@ namespace app_encre
     rtmp_request(){};
   protected:
     Variant             m_request;
+    BaseRTMPProtocol    *m_conn; // We doesn't own this
   };
 
   class rtmp_connect : public rtmp_request
   {
   public:
-    rtmp_connect(Variant &request);
+    rtmp_connect(Variant &request, BaseRTMPProtocol *conn);
     rtmp_connect(const rtmp_connect &);
 
     virtual bool        is_valid();
@@ -63,7 +64,7 @@ namespace app_encre
   class rtmp_publish : public rtmp_request
   {
   public:
-    rtmp_publish(Variant &request);
+    rtmp_publish(Variant &request, BaseRTMPProtocol *conn);
     rtmp_publish(const rtmp_publish &);
 
     virtual bool        is_valid();
@@ -75,7 +76,7 @@ namespace app_encre
   class rtmp_play : public rtmp_request
   {
   public:
-    rtmp_play(Variant &request);
+    rtmp_play(Variant &request, BaseRTMPProtocol *conn);
     rtmp_play(const rtmp_play &);
 
     virtual bool        is_valid();
