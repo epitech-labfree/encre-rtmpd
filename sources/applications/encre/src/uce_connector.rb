@@ -54,7 +54,8 @@ def rtmpd_event_handler(e)
     puts "publish"
     UceEvent.i.ev_stream_started({ :user_uid => e["data"]["uid"],
                                    :room => e["data"]["room"],
-                                   :name => e["data"]["stream_name"]})
+                                   :name => e["data"]["stream_name"]},
+                                 e["data"]["room"])
 
   end
 end

@@ -86,16 +86,18 @@ class UceEvent
     # send_event(type, metadata)
   end
 
-  def event(type, metadata)
+  def event(type, metadata, room = nil)
     meta = {'metadata' => metadata}.flatten_for_query
     query = @cred.merge({'type' => type}).merge(meta)
-    pipe = @request.post :keepalive => true, :query => query
+    pipe = @request.post :keepalive => true, :path => room, :query => query
     pipe.errback { on_error type, metadata }
     pipe.callback { on_response pipe, type, metadata }
   end
 
    def method_missing(sym, *args)
-     self.event(sym.to_s, args[0])
+     room = nil
+     room = args[1] if args.length > 1
+     self.event(sym.to_s, args[0], room)
    end
 end
 

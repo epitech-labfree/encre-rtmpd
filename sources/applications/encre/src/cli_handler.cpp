@@ -51,9 +51,9 @@ CLIAppProtocolHandler::~CLIAppProtocolHandler()
  */
 void CLIAppProtocolHandler::RegisterProtocol(BaseProtocol *pProtocol)
 {
+  m_client = pProtocol;
   if (!m_client)
   {
-    m_client = pProtocol;
     WARN("Encre: A CLI controller is connecting");
   }
   else
