@@ -71,7 +71,6 @@ class UceEvent
   def on_login(uid, sid)
     @cred[:uid] = uid
     @cred[:sid] = sid
-    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event')
     #test_event 'test' => 1, 'test2' => {'subtest1' => 1, 'subtest2' => 2}
     #event 'test_event', { 'test' => 1, 'test2' => 2 }
   end
@@ -89,7 +88,8 @@ class UceEvent
   def event(type, metadata, room = nil)
     meta = {'metadata' => metadata}.flatten_for_query
     query = @cred.merge({'type' => type}).merge(meta)
-    pipe = @request.post :keepalive => true, :path => room, :query => query
+    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event/' + room)
+    pipe = @request.post :query => query
     pipe.errback { on_error type, metadata }
     pipe.callback { on_response pipe, type, metadata }
   end
