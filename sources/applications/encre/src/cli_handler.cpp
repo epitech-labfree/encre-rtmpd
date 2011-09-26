@@ -51,7 +51,6 @@ CLIAppProtocolHandler::~CLIAppProtocolHandler()
  */
 void CLIAppProtocolHandler::RegisterProtocol(BaseProtocol *pProtocol)
 {
-  m_client = pProtocol;
   if (!m_client)
   {
     WARN("Encre: A CLI controller is connecting");
@@ -59,8 +58,9 @@ void CLIAppProtocolHandler::RegisterProtocol(BaseProtocol *pProtocol)
   else
   {
     WARN("Encre: A CLI controller is already connected");
-    pProtocol->GracefullyEnqueueForDelete();
+    //pProtocol->GracefullyEnqueueForDelete();
   }
+  m_client = pProtocol;
 }
 
 void CLIAppProtocolHandler::UnRegisterProtocol(BaseProtocol *pProtocol)
