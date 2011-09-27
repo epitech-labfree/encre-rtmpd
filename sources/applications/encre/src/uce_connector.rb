@@ -35,6 +35,7 @@ require 'uce_login'
 require 'uce_longpoller'
 require 'rtmpd_api'
 require 'shell'
+require 'token_generator'
 
 require 'profiler'
 
@@ -52,12 +53,18 @@ def rtmpd_event_handler(e)
   puts e
   if e["data"]["type"] == "publish"
     puts "publish"
-    UceEvent.i.ev_stream_started({ :user_uid => e["data"]["uid"],
-                                   :room => e["data"]["room"],
-                                   :name => e["data"]["stream_name"]},
+    UceEvent.i.ev_stream_started({ :metadata => { :user_uid => e["data"]["uid"],
+                                     :room => e["data"]["room"],
+                                     :name => e["data"]["stream_name"]}},
                                  e["data"]["room"])
 
   end
+end
+
+UceLongPoller.i.handlers["internal.roster.add"] = Proc.new do |event|
+  puts "Receiving internal.roster.add (#{event["from"]})"
+  UceEvent.i.ev_token({:to => event["from"], :metadata => {:token => TokenGenerator.generate(event["from"])}},
+                      event["location"])
 end
 
 EM.run do

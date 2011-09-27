@@ -65,6 +65,8 @@ namespace app_encre
     user_map                    &users();
     stream_map                  &streams();
 
+    virtual void SignalStreamUnRegistered(BaseStream *pStream);
+
 #ifdef HAS_PROTOCOL_RTMP
     RTMPAppProtocolHandler      &rtmp();
 #endif /* HAS_PROTOCOL_RTMP */

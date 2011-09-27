@@ -22,6 +22,7 @@
 #include "rtmpappprotocolhandler.h"
 #include "cli_handler.h"
 #include "protocols/baseprotocol.h"
+#include "streaming/streamstypes.h"
 using namespace app_encre;
 
 EncreApplication::EncreApplication(Variant &configuration)
@@ -105,4 +106,24 @@ CLIAppProtocolHandler       &EncreApplication::cli()
   return *_pCLIHandler;
 }
 #endif /* HAS_PROTOCOL_CLI */
+
+void                        EncreApplication::SignalStreamUnRegistered(BaseStream *pStream)
+{
+  BaseClientApplication::SignalStreamUnRegistered(pStream);
+
+  if (pStream->GetType() == ST_OUT_FILE_RTMP_FLV)
+  {
+    Variant msg;
+    INFO("Encre: End of recording: '%s', requesting upload to uce",
+         STR(pStream->GetName()));
+    msg["type"] = "new_record";
+    msg["path"] = STR(pStream->GetName());
+    cli().SendControllerMessage(msg);
+  }
+
+  // INFO("Stream %u of type %u with name `%s` unregistered from application",
+  //     pStream->GetUniqueId(),
+  //      (unsigned)pStream->GetType(),
+  //     STR(pStream->GetName()));
+}
 

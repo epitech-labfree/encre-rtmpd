@@ -85,13 +85,13 @@ class UceEvent
     # send_event(type, metadata)
   end
 
-  def event(type, metadata, room = nil)
-    meta = {'metadata' => metadata}.flatten_for_query
+  def event(type, data, room = nil)
+    meta = data.flatten_for_query
     query = @cred.merge({'type' => type}).merge(meta)
-    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event/' + room)
+    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event/' + room.to_s)
     pipe = @request.post :query => query
-    pipe.errback { on_error type, metadata }
-    pipe.callback { on_response pipe, type, metadata }
+    pipe.errback { on_error type, data }
+    pipe.callback { on_response pipe, type, data }
   end
 
    def method_missing(sym, *args)

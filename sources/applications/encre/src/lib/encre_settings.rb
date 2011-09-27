@@ -44,6 +44,7 @@ class Conf
       :uce_token => "123456",
       :logfile => "STDOUT",
       :loglevel => "DEBUG",
+      :token_secret => "givemeagoodrandomsecret"
     }
 
     begin
