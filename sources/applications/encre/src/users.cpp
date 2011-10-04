@@ -33,10 +33,11 @@ properties_map                  &has_properties::properties()
   return m_props;
 }
 
-user::user(std::string uid, std::string sid)
+user::user(std::string uid, std::string token, std::string meeting)
 {
   properties()["uid"] = uid;
-  properties()["sid"] = sid;
+  properties()["token"] = token;
+  properties()["meeting"] = meeting;
 }
 
 user::user(const user &o)

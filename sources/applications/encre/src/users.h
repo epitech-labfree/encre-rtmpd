@@ -73,7 +73,7 @@ class user : public has_properties
  public:
 
   user() {}
-  user(std::string uid, std::string sid);
+  user(std::string uid, std::string token, std::string meeting);
   user(const user &);
   ~user();
 
@@ -85,17 +85,27 @@ class user : public has_properties
 };
 
 
-class user_map : public map<std::string, user>
+class meeting : public map<std::string, user>, public has_properties
 {
-public:
+ public:
+  meeting(std::string name)
+  {
+    properties()["name"] = name;
+  }
+
   bool          exists(std::string user)
   {
     return find(user) != end();
   }
+ private:
+  meeting() {}
 };
+
+class meeting_map : public map<std::string, meeting>
 
 typedef map<std::string, stream> stream_map;
 
+
 }
 
-#endif 	    /* !ROOM_H_ */
+#endif

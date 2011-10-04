@@ -49,6 +49,8 @@ class CLIAppProtocolHandler : public BaseCLIAppProtocolHandler
 
  protected:
   bool ProcessInvokeCommand(BaseProtocol *pFrom, Variant &message);
+  bool ProcessInvokeMeetingNew(BaseProtocol *pFrom, Variant &command);
+  bool ProcessInvokeMeetingDel(BaseProtocol *pFrom, Variant &command);
   bool ProcessInvokeUserNew(BaseProtocol *pFrom, Variant &command);
   bool ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &command);
   bool ProcessInvokeStreamNew(BaseProtocol *pFrom, Variant &command);

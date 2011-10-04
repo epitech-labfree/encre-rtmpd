@@ -62,7 +62,7 @@ namespace app_encre
     virtual ~EncreApplication();
     virtual bool Initialize();
 
-    user_map                    &users();
+    meeting_map                 &meetings();
     stream_map                  &streams();
 
     virtual void SignalStreamUnRegistered(BaseStream *pStream);

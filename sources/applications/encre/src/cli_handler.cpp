@@ -113,6 +113,10 @@ bool CLIAppProtocolHandler::ProcessInvokeCommand(BaseProtocol *pFrom, Variant &c
     return ProcessInvokeUserNew(pFrom, command);
   else if (cmd == "user.del")
     return ProcessInvokeUserDel(pFrom, command);
+  else if (cmd == "meeting.new")
+    return ProcessInvokeMeetingNew(pFrom, command);
+  else if (cmd == "meeting.del")
+    return ProcessInvokeMeetingDel(pFrom, command);
   else if (cmd == "stream.new")
     return ProcessInvokeStreamNew(pFrom, command);
   else if (cmd == "stream.del")
@@ -129,41 +133,96 @@ bool CLIAppProtocolHandler::ProcessInvokeCommand(BaseProtocol *pFrom, Variant &c
     return false;
 }
 
-bool CLIAppProtocolHandler::ProcessInvokeUserNew(BaseProtocol *pFrom, Variant &command)
+bool CLIAppProtocolHandler::ProcessInvokeMeetingNew(BaseProtocol *pFrom,
+                                                    Variant &cmd)
 {
-  if (!(command.HasKey("uid") && command.HasKey("sid")))
+  // Are all the required parameters here ?
+  if (!cmd.HasKey("name"))
   {
     FINEST("Missing parameter");
     return false;
   }
-  if (encre().users().find(command["uid"]) != encre().users().end())
+
+  if (encre().meetings().find(cmd["name"]) != encre().meetings().end())
+  {
+    meeting m(cmd["name"]);
+    encre().meetings()[cmd["name"]] = m;
+  }
+  return true;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeMeetingDel(BaseProtocol *pFrom,
+                                                    Variant &cmd)
+{
+  // Are all the required parameters here ?
+  if (!cmd.HasKey("name"))
+  {
+    FINEST("Missing parameter");
+    return false;
+  }
+
+  if (encre().meetings().find(cmd["name"]) != encre().meetings().end())
+  {
+    mencre().eetings().erase(cmd["name"]);
+    return true;
+  }
+  return false;
+}
+
+bool CLIAppProtocolHandler::ProcessInvokeUserNew(BaseProtocol *pFrom, Variant &cmd)
+{
+  // Are all the required parameters here ?
+  if (!(cmd.HasKey("uid") && cmd.HasKey("token") && cmd.HasKey("room")))
+  {
+    FINEST("Missing parameter");
+    return false;
+  }
+
+  // Meeting exists ?
+  if (encre().meetings().find(cmd["meeting"]) == encre().meetings().end())
+  {
+    FINEST("Meeting %s doesn't exists", STR(cmd["meeting"]));
+    return false;
+  }
+
+  if (encre().meetings()[cmd["meeting"]].exists(cmd["uid"]))
   {
     FINEST("User already exists.");
     return true;
   }
 
-  user new_user(command["uid"], command["sid"]);
-  encre().users()[command["uid"]] = new_user;
+  user new_user(cmd["uid"], cmd["token"], cmd["meeting"]);
+  encre().meetings()[cmd["meeting"]][cmd["uid"]] = new_user;
 
-  FINEST("Creating new user");
+  FINEST("Creating new user (%s, %s) in meeting %s",
+         STR(cmd["uid"], STR(cmd["token"], STR(cmd["room"]);
 
   return true;
 }
 
-bool CLIAppProtocolHandler::ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &command)
+bool CLIAppProtocolHandler::ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &cmd)
 {
-  if (!command.HasKey("uid"))
+  // Are all the required parameters here ?
+  if (!(cmd.HasKey("uid") && cmd.HasKey("room")))
   {
     FINEST("Missing parameter");
     return false;
   }
-  if (encre().users().find(command["uid"]) == encre().users().end())
+
+  // Meeting exists ?
+  if (encre().meetings().find(cmd["meeting"]) == encre().meetings().end())
+  {
+    FINEST("Meeting %s doesn't exists", STR(cmd["meeting"]));
+    return false;
+  }
+
+  if (encre().users().find(cmd["uid"]) == encre().users().end())
   {
     FINEST("User doesn't exist.");
     return false;
   }
 
-  encre().users().erase(command["uid"]);
+  encre().users().erase(cmd["uid"]);
   FINEST("Deleting a user");
 
   return true;
