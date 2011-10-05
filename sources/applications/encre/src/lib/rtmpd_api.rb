@@ -40,10 +40,10 @@ class RtmpdConnection < EM::Connection
   end
 
   def receive_data(data)
-    data.chomp!
-
-    msg = JSON.parse data
-    _on_message msg
+    data.split("\r\n\r\n").each do |line|
+      msg = JSON.parse line
+      _on_message msg
+    end
   end
 
   def on_message(&block)
