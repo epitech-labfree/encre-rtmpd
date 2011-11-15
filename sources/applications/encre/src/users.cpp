@@ -41,7 +41,7 @@ user::user(std::string uid, std::string token, std::string meeting)
 }
 
 user::user(const user &o)
-  : m_streams(o.m_streams)
+  : has_properties(o), m_streams(o.m_streams)
 {
 }
 
@@ -62,6 +62,21 @@ stream::list                          &user::streams()
   return m_streams;
 }
 
+std::string                           user::meeting()
+{
+  return properties()["meeting"];
+}
+
+std::string                           user::uid()
+{
+  return properties()["uid"];
+}
+
+std::string                           user::token()
+{
+  return properties()["token"];
+}
+
 
 
 
@@ -73,13 +88,15 @@ stream::list                          &user::streams()
  * stream class
  */
 
-stream::stream(std::string uid, std::string name)
+stream::stream(std::string meeting, std::string uid, std::string name)
 {
+  properties()["meeting"] = meeting;
   properties()["owner"] = uid;
   properties()["name"] = name;
 }
 
 stream::stream(const stream &o)
+  : has_properties(o)
 {
 }
 

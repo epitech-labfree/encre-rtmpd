@@ -54,7 +54,8 @@ namespace app_encre
     CLIAppProtocolHandler *_pCLIHandler;
 #endif /* HAS_PROTOCOL_CLI */
 
-    user_map                    m_users;
+    //user_map                    m_users;
+    meeting_map                 m_meetings;
     stream_map                  m_streams;
 
   public:

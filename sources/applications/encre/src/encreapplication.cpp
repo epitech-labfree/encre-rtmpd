@@ -84,12 +84,17 @@ bool EncreApplication::Initialize()
   return true;
 }
 
-user_map &EncreApplication::users()
+// user_map &EncreApplication::users()
+// {
+//   return m_users;
+// }
+
+meeting_map                 &EncreApplication::meetings()
 {
-  return m_users;
+  return m_meetings;
 }
 
-stream_map &EncreApplication::streams()
+stream_map                  &EncreApplication::streams()
 {
   return m_streams;
 }

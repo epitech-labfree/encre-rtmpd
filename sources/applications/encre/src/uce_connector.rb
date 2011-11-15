@@ -33,6 +33,7 @@ require 'encre_settings'
 require 'uce_event'
 require 'uce_login'
 require 'uce_longpoller'
+require 'uce_meeting'
 require 'rtmpd_api'
 require 'shell'
 require 'token_generator'
@@ -72,7 +73,8 @@ EM.run do
   EM.open_keyboard Shell
   UceLogin.new(Proc.new { |uid, sid| puts "Connected with #{uid}, #{sid}"},
                Proc.new { |u, s| UceLongPoller.i.on_login(u, s) },
-               Proc.new { |u, s| UceEvent.i.on_login(u, s) })
+               Proc.new { |u, s| UceEvent.i.on_login(u, s) },
+               Proc.new { |u, s| UceMeeting.list(u, s) })
 end
 
 #Profiler__.print_profile STDOUT

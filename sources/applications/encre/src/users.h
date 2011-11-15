@@ -21,6 +21,12 @@
 ** You should have received a copy of the GNU General Public License
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+**
+*
+* - A meeting map holds a list of the different existing meetings
+* - A meeting is a hash of user, since users logs on a meeting
+* - A user will probably records the list of stream he's reading/publishing
+*
 */
 
 #ifndef   	ROOM_H_
@@ -59,13 +65,14 @@ class stream : public has_properties
   typedef std::vector<std::string>      list;
 
   stream() {}
-  stream(std::string owner_uid, std::string name);
+  stream(std::string meeting, std::string owner_uid, std::string name);
   stream(const stream &);
   ~stream();
 
   stream                                &operator=(const stream &);
   std::string                           name();
   std::string                           owner();
+  std::string                           meeting();
 };
 
 class user : public has_properties
@@ -79,6 +86,9 @@ class user : public has_properties
 
   user                                  &operator=(const user &);
   stream::list                          &streams();
+  std::string                           meeting();
+  std::string                           uid();
+  std::string                           token();
 
  protected:
   stream::list                          m_streams;
@@ -88,9 +98,22 @@ class user : public has_properties
 class meeting : public map<std::string, user>, public has_properties
 {
  public:
+  meeting()
+  {
+    properties()["name"] = std::string("meeting_default_constructor");
+  }
   meeting(std::string name)
   {
     properties()["name"] = name;
+  }
+  meeting(const meeting &other)
+    : map<std::string, user>(other), has_properties(other)
+  {
+  }
+  meeting       &operator=(const meeting &other)
+  {
+    m_props = other.m_props;
+    return *this;
   }
 
   bool          exists(std::string user)
@@ -98,12 +121,16 @@ class meeting : public map<std::string, user>, public has_properties
     return find(user) != end();
   }
  private:
-  meeting() {}
+  //meeting() {}
 };
 
 class meeting_map : public map<std::string, meeting>
+{
+};
 
-typedef map<std::string, stream> stream_map;
+class stream_map : public map<std::string, stream>
+{
+};
 
 
 }

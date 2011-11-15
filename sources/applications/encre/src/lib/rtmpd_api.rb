@@ -87,6 +87,14 @@ class Rtmpd
     cmd(:command => "user.del", :uid => uid)
   end
 
+  def meeting_new(meeting)
+    cmd(:command => "meeting.new", :name => meeting)
+  end
+
+  def meeting_del(meeting)
+    cmd(:command => "meeting.del", :name => meeting)
+  end
+
   def stream_new(uid, stream)
     cmd(:command => "stream.new", :uid => uid, :stream => stream)
   end

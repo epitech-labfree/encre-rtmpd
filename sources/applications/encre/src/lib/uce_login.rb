@@ -38,16 +38,14 @@ class UceLogin
   end
 
   def on_login
-    puts @request.response_header.status
-    puts @request.response
+    # puts @request.response_header.status
+    # puts @request.response
 
     status = @request.response_header.status.to_i
 
     if status >= 200 and status < 300
-
-    r = JSON.parse @request.response
-
-    @callbacks.each { |c| c.call r['result']['uid'], r['result']['sid'] }
+      r = JSON.parse @request.response
+      @callbacks.each { |c| c.call r['result']['uid'], r['result']['sid'] }
     else
       on_error
     end

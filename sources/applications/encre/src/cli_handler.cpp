@@ -143,7 +143,7 @@ bool CLIAppProtocolHandler::ProcessInvokeMeetingNew(BaseProtocol *pFrom,
     return false;
   }
 
-  if (encre().meetings().find(cmd["name"]) != encre().meetings().end())
+  if (encre().meetings().find(cmd["name"]) == encre().meetings().end())
   {
     meeting m(cmd["name"]);
     encre().meetings()[cmd["name"]] = m;
@@ -163,7 +163,7 @@ bool CLIAppProtocolHandler::ProcessInvokeMeetingDel(BaseProtocol *pFrom,
 
   if (encre().meetings().find(cmd["name"]) != encre().meetings().end())
   {
-    mencre().eetings().erase(cmd["name"]);
+    encre().meetings().erase(cmd["name"]);
     return true;
   }
   return false;
@@ -195,7 +195,7 @@ bool CLIAppProtocolHandler::ProcessInvokeUserNew(BaseProtocol *pFrom, Variant &c
   encre().meetings()[cmd["meeting"]][cmd["uid"]] = new_user;
 
   FINEST("Creating new user (%s, %s) in meeting %s",
-         STR(cmd["uid"], STR(cmd["token"], STR(cmd["room"]);
+         STR(cmd["uid"]), STR(cmd["token"]), STR(cmd["room"]));
 
   return true;
 }
@@ -216,13 +216,13 @@ bool CLIAppProtocolHandler::ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &c
     return false;
   }
 
-  if (encre().users().find(cmd["uid"]) == encre().users().end())
+  if (encre().meetings()[cmd["room"]].exists(cmd["uid"]))
   {
     FINEST("User doesn't exist.");
     return false;
   }
 
-  encre().users().erase(cmd["uid"]);
+  encre().meetings()[cmd["room"]].erase(cmd["uid"]);
   FINEST("Deleting a user");
 
   return true;
