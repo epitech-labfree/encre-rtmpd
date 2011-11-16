@@ -40,7 +40,11 @@ class RtmpdConnection < EM::Connection
   end
 
   def receive_data(data)
-    data.split("\r\n\r\n").each do |line|
+    @buffer = @buffer + data
+
+    while (pos = @buffer.index "\r\n\r\n") do
+      line = @buffer[0, pos]
+      @buffer = @buffer[pos + 4, @buffer.length]
       msg = JSON.parse line
       _on_message msg
     end
