@@ -83,12 +83,12 @@ class Rtmpd
     @send.call h.to_json + "\n" if @send
   end
 
-  def user_new(uid, sid)
-    cmd(:command => "user.new", :uid => uid, :sid => sid)
+  def user_new(uid, token, room)
+    cmd(:command => "user.new", :uid => uid, :sid => token, :room => room)
   end
 
-  def user_del(uid)
-    cmd(:command => "user.del", :uid => uid)
+  def user_del(uid, room)
+    cmd(:command => "user.del", :uid => uid, :room => room)
   end
 
   def meeting_new(meeting)

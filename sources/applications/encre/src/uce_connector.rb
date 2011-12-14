@@ -1,4 +1,4 @@
-#! /usr/bin/ruby1.9.1
+#! /usr/bin/env ruby
 ## uce_connector.rb
 ## Login : <elthariel@hydre>
 ## Started on  Wed May 25 13:52:44 2011 Julien 'Lta' BALLET
@@ -50,10 +50,7 @@ $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
 # end
 
 def rtmpd_event_handler(e)
-  puts "##################3"
-  puts e
   if e["data"]["type"] == "publish"
-    puts "publish"
     UceEvent.i.ev_stream_started({ :metadata => { :user_uid => e["data"]["uid"],
                                      :room => e["data"]["room"],
                                      :name => e["data"]["stream_name"]}},
@@ -64,8 +61,16 @@ end
 
 UceLongPoller.i.handlers["internal.roster.add"] = Proc.new do |event|
   puts "Receiving internal.roster.add (#{event["from"]})"
-  UceEvent.i.ev_token({:to => event["from"], :metadata => {:token => TokenGenerator.generate(event["from"])}},
+  token = TokenGenerator.generate(event["from"])
+  Rtmpd.i.user_new event["from"], token, event["location"]
+  UceEvent.i.ev_token({:to => event["from"], :metadata => {:token => token}},
                       event["location"])
+end
+
+UceLongPoller.i.handlers["internal.roster.delete"] = Proc.new do |event|
+  puts "Receiving internal.roster.delete (#{event["from"]})"
+
+  Rtmpd.i.user_del event["from"], event["location"]
 end
 
 EM.run do

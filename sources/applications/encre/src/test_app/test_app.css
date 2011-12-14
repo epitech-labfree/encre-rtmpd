@@ -1,0 +1,49 @@
+.log_meeting
+{
+    font-size:14px;
+    text-decoration:underline;
+}
+
+.log_json
+{
+    font-family: "Courier New";
+    font-size: 11px;
+}
+
+.box
+{
+    border-style: dotted;
+    border-width: 2px;
+}
+
+#event_log
+{
+    padding: 10px;
+}
+
+#event_box
+{
+    position: absolute;
+    top: 0px;
+    left: 68%;
+    overflow: scroll;
+    width: 30%;
+    height: 97%;
+    padding: 8px;
+}
+
+#content
+{
+    position: absolute;
+    top: 0px;
+    width: 66%;
+}
+
+#login_box
+{
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 30%;
+}
+

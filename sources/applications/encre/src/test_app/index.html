@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>EV1.5 test</title>
+<link rel="stylesheet" type="text/css" href="test_app.css" />
+</head>
+<body>
+  <script src="jquery-1.7.1.js"></script>
+  <script src="uce.js"></script>
+  <script src="coffee-script.js"></script>
+  <script type="text/coffeescript" src="test_app.coffee"></script>
+  <!-- <script src="test_app.js"></script> -->
+
+  <div id="content" class="box">
+    <div id="login_box" class="box">
+      <form action="javascript:login_submit();">
+        Login: <input type="text" name="uid" value="toto"/><br/>
+        Pass: <input type="password" name="credential" value="123456"/><br/>
+        Room: <input type="text" name="meeting" value="test-meeting"/><br/>
+        <input type="submit" value="Let me in..."/>
+      </form>
+    </div>
+  </div>
+  <div id="event_box" class="box">
+    <ul id="event_log">
+    </ul>
+  </div>
+
+</body>
+</html>
