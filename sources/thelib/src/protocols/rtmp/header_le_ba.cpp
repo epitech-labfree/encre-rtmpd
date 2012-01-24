@@ -208,6 +208,47 @@ bool Header::Write(Channel &channel, IOBuffer &buffer) {
 		channel.lastOutStreamId = H_SI(*this);
 	}
 
+#ifdef ENFORCE_RTMP_OUTPUT_CHECKS
+	switch (ht) {
+		case HT_FULL:
+		{
+			o_assert(channel.lastOutProcBytes == 0);
+			o_assert(H_IA(*this));
+			break;
+		}
+		case HT_SAME_STREAM:
+		{
+			o_assert(channel.lastOutProcBytes == 0);
+			o_assert(channel.lastOutStreamId == hf.s.si);
+			o_assert(channel.lastOutStreamId == channel.lastOutHeader.hf.s.si);
+			break;
+		}
+		case HT_SAME_LENGTH_AND_STREAM:
+		{
+			o_assert(channel.lastOutProcBytes == 0);
+			o_assert(channel.lastOutStreamId == hf.s.si);
+			o_assert(channel.lastOutStreamId == channel.lastOutHeader.hf.s.si);
+			o_assert(channel.lastOutHeader.hf.s.mt == hf.s.mt);
+			o_assert(channel.lastOutHeader.hf.s.ml == hf.s.ml);
+			o_assert(channel.lastOutHeader.hf.s.ts != hf.s.ts);
+			break;
+		}
+		case HT_CONTINUATION:
+		{
+			o_assert(channel.lastOutStreamId == hf.s.si);
+			o_assert(channel.lastOutStreamId == channel.lastOutHeader.hf.s.si);
+			o_assert(channel.lastOutHeader.hf.s.mt == hf.s.mt);
+			o_assert(channel.lastOutHeader.hf.s.ml == hf.s.ml);
+			o_assert(channel.lastOutHeader.hf.s.ts == hf.s.ts);
+			break;
+		}
+		default:
+		{
+			ASSERT("Invalid header type!!!");
+		}
+	}
+#endif /* ENFORCE_RTMP_OUTPUT_CHECKS */
+
 	//2. Save the last sent header
 	channel.lastOutHeader = *this;
 
@@ -305,9 +346,8 @@ bool Header::Write(IOBuffer &buffer) {
 }
 
 Header::operator string() {
-	//	return format("(RC: %u; HT: %u; CI: %02u; T: % 9u; L: % 6u; MT: % 2u; SI: % 2u; IA: %u)",
-	//			readCompleted, ht, ci, hf.s.ts, hf.s.ml, hf.s.mt, hf.s.si, isAbsolute);
-	return "not yet implemented";
+	return format("(RC: %"PRIu8"; HT: %"PRIu8"; CI: %02"PRIu32"; T: % 9"PRIu32"; L: % 6"PRIu32"; MT: % 2"PRIu8"; SI: % 2"PRIu32"; IA: %"PRIu8")",
+			readCompleted, ht, ci, hf.s.ts, hf.s.ml, hf.s.mt, hf.s.si, isAbsolute);
 }
 
 #endif /* LITTLE_ENDIAN_BYTE_ALIGNED */

@@ -54,7 +54,8 @@ private:
 	Channel *_pChannelCommands;
 	uint32_t _feederChunkSize;
 	bool _canDropFrames;
-	bool _currentFrameDropped;
+	bool _audioCurrentFrameDropped;
+	bool _videoCurrentFrameDropped;
 	uint32_t _maxBufferSize;
 	uint64_t _attachedStreamType;
 	Variant _completeMetadata;
@@ -72,10 +73,10 @@ private:
 	uint64_t _videoBytesCount;
 	uint64_t _videoDroppedBytesCount;
 protected:
-	BaseOutNetRTMPStream(BaseProtocol *pProtocol, StreamsManager *pStreamsManager,
+	BaseOutNetRTMPStream(BaseRTMPProtocol *pProtocol, StreamsManager *pStreamsManager,
 			uint64_t type, string name, uint32_t rtmpStreamId, uint32_t chunkSize);
 public:
-	static BaseOutNetRTMPStream *GetInstance(BaseProtocol *pProtocol,
+	static BaseOutNetRTMPStream *GetInstance(BaseRTMPProtocol *pProtocol,
 			StreamsManager *pStreamsManager,
 			string name, uint32_t rtmpStreamId,
 			uint32_t chunkSize,
@@ -90,7 +91,7 @@ public:
 	bool CanDropFrames();
 	void CanDropFrames(bool canDropFrames);
 	void SetSendOnStatusPlayMessages(bool value);
-	virtual void GetStats(Variant &info);
+	virtual void GetStats(Variant &info, uint32_t namespaceId = 0);
 
 	virtual bool FeedData(uint8_t *pData, uint32_t dataLength,
 			uint32_t processedLength, uint32_t totalLength,

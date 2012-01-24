@@ -1,4 +1,4 @@
-/* 
+/*
  *  Copyright (c) 2010,
  *  Gavriloaie Eugen-Andrei (shiretu@gmail.com)
  *
@@ -449,7 +449,7 @@ bool ClientContext::SignalProtocolCreated(BaseProtocol *pProtocol, Variant &para
 
 	//1. Get the context
 	uint32_t contextId = parameters["contextId"];
-	assert(contextId != 0);
+	o_assert(contextId != 0);
 	ClientContext *pContext = GetContext(contextId, 0, 0);
 	if (pContext == NULL) {
 		FATAL("Unable to get the context");
@@ -672,11 +672,7 @@ bool ClientContext::FetchURI(string uriString, string requestType, Variant &cust
 		return false;
 	}
 
-	if (uri.fullDocumentPath == "") {
-		uri.fullDocumentPath = "/";
-	}
-
-	if (uri.scheme == "https") {
+	if (uri.scheme() == "https") {
 
 		FOR_VECTOR_ITERATOR(uint64_t, protocolStackTypes, i) {
 			if (VECTOR_VAL(i) == PT_INBOUND_HTTP) {
@@ -692,14 +688,14 @@ bool ClientContext::FetchURI(string uriString, string requestType, Variant &cust
 	//3. Prepare the HTTP info
 	Variant parameters;
 	parameters["fullUri"] = uriString;
-	parameters["document"] = uri.fullDocumentPath;
-	parameters["host"] = uri.host;
+	parameters["document"] = uri.fullDocumentPath();
+	parameters["host"] = uri.host();
 	parameters["applicationId"] = _applicationId;
 	parameters["contextId"] = _id;
 	parameters["payload"] = customParameters;
 
 	//4. Start the connection process
-	if (!TCPConnector<ClientContext>::Connect(uri.ip, uri.port, protocolStackTypes, parameters)) {
+	if (!TCPConnector<ClientContext>::Connect(uri.ip(), uri.port(), protocolStackTypes, parameters)) {
 		FATAL("Unable to open connection to origin");
 		return false;
 	}

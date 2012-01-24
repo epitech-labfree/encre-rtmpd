@@ -23,17 +23,30 @@
 
 #include "utils/logging/baseloglocation.h"
 
+class Formatter;
+
 class SyslogLogLocation
 : public BaseLogLocation {
 private:
 	bool _appendSourceFileLine;
 	string _identifier;
 	map<uint32_t, int> _priorities;
+	bool _enforceLoggerName;
+
+	map<string, Formatter *> _formatters;
+	Formatter *_pDefualtFormatter;
 public:
-	SyslogLogLocation(string identifier = "", bool appendSourceFileLine = true);
+	SyslogLogLocation(Variant &configuration, string identifier = "",
+			bool appendSourceFileLine = true, int32_t specificLevel = 0);
 	virtual ~SyslogLogLocation();
 	virtual void Log(int32_t level, string fileName, uint32_t lineNumber,
 			string functionName, string message);
+	virtual void Log(int32_t level, string fileName, uint32_t lineNumber,
+			string functionName, Variant &le);
+	virtual void SignalFork();
+private:
+	void InitFormatters();
+	string ComputeMessage(Variant &le);
 };
 
 

@@ -118,6 +118,10 @@ bool InboundTSProtocol::SignalInputData(int32_t recvAmount) {
 	return false;
 }
 
+bool InboundTSProtocol::SignalInputData(IOBuffer &buffer, sockaddr_in *pPeerAddress) {
+	return SignalInputData(buffer);
+}
+
 bool InboundTSProtocol::SignalInputData(IOBuffer &buffer) {
 	if (_pFarProtocol && _pFarProtocol->GetCustomParameters()["streamType"] == V_STRING
 	    && std::string(_pFarProtocol->GetCustomParameters()["streamType"]) == "Receiver") {
@@ -168,7 +172,7 @@ bool InboundTSProtocol::SignalInputData(IOBuffer &buffer) {
 		uint32_t packetHeader = ENTOHLP(GETIBPOINTER(buffer));
 
 		if (!ProcessPacket(packetHeader, buffer, _chunkSize)) {
-			FATAL("Unable to process packet:\n%s", STR(buffer));
+			FATAL("Unable to process packet");
 			return false;
 		}
 
@@ -289,13 +293,15 @@ bool InboundTSProtocol::ProcessPacket(uint32_t packetHeader,
 		{
 			return pPIDDescriptor->payload.pStream->FeedData(pBuffer + cursor,
 					_chunkSize - cursor,
-					TS_TRANSPORT_PACKET_IS_PAYLOAD_START(packetHeader), true);
+					TS_TRANSPORT_PACKET_IS_PAYLOAD_START(packetHeader), true,
+					(int8_t) packetHeader & 0x0f);
 		}
 		case PID_TYPE_VIDEOSTREAM:
 		{
 			return pPIDDescriptor->payload.pStream->FeedData(pBuffer + cursor,
 					_chunkSize - cursor,
-					TS_TRANSPORT_PACKET_IS_PAYLOAD_START(packetHeader), false);
+					TS_TRANSPORT_PACKET_IS_PAYLOAD_START(packetHeader), false,
+					(int8_t) packetHeader & 0x0f);
 		}
 		case PID_TYPE_RESERVED:
 		{
@@ -470,8 +476,12 @@ bool InboundTSProtocol::ProcessPidTypePMT(uint32_t packetHeader,
 	InNetTSStream *pStream = NULL;
 
 	if ((videoPid != 0) || (audioPid != 0)) {
+		if (!GetApplication()->StreamNameAvailable(streamName, this)) {
+			FATAL("Stream name %s already taken", STR(streamName));
+			return false;
+		}
 		pStream = new InNetTSStream(this, GetApplication()->GetStreamsManager(),
-				streamName);
+				streamName, packetPMT.GetBandwidth());
 	}
 
 	//5. Create the pid descriptors for audioPid and videoPid and store them

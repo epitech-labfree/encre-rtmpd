@@ -77,7 +77,7 @@ bool InboundNamedPipeCarrier::OnEvent(struct kevent &event) {
 		case EVFILT_READ:
 		{
 			IOBuffer *pInputBuffer = _pProtocol->GetInputBuffer();
-			assert(pInputBuffer != NULL);
+			o_assert(pInputBuffer != NULL);
 			if (!pInputBuffer->ReadFromPipe(event.ident, event.data, recvAmount)) {
 				FATAL("Unable to read data");
 				return false;
@@ -99,7 +99,7 @@ InboundNamedPipeCarrier::operator string() {
 	return format("INP(%d)", _inboundFd);
 }
 
-void InboundNamedPipeCarrier::GetStats(Variant &info) {
+void InboundNamedPipeCarrier::GetStats(Variant &info, uint32_t namespaceId) {
 
 }
 

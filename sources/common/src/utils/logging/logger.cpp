@@ -34,19 +34,19 @@ public:
 	LogLocker(pthread_mutex_t *pMutex) {
 		if (pMutex == NULL) {
 			printf("Logger not initialized\n");
-			assert(false);
+			o_assert(false);
 		}
 		_pMutex = pMutex;
 		if (pthread_mutex_lock(_pMutex) != 0) {
 			printf("Unable to lock the logger");
-			assert(false);
+			o_assert(false);
 		}
 	};
 
 	virtual ~LogLocker() {
 		if (pthread_mutex_unlock(_pMutex) != 0) {
 			printf("Unable to unlock the logger");
-			assert(false);
+			o_assert(false);
 		}
 	}
 };
@@ -75,12 +75,12 @@ void Logger::Init() {
 #ifdef HAS_SAFE_LOGGER
 	if (_pMutex != NULL) {
 		printf("logger already initialized");
-		assert(false);
+		o_assert(false);
 	}
 	_pMutex = new pthread_mutex_t;
 	if (pthread_mutex_init(_pMutex, NULL)) {
 		printf("Unable to init the logger mutex");
-		assert(false);
+		o_assert(false);
 	}
 #else
 	if (_pLogger != NULL)
@@ -110,8 +110,23 @@ void Logger::Log(int32_t level, string fileName, uint32_t lineNumber,
 	va_end(arguments);
 
 	FOR_VECTOR(_pLogger->_logLocations, i) {
-		_pLogger->_logLocations[i]->Log(level, fileName,
+		if (_pLogger->_logLocations[i]->EvalLogLevel(level, fileName, lineNumber,
+				functionName, formatString))
+			_pLogger->_logLocations[i]->Log(level, fileName,
 				lineNumber, functionName, message);
+	}
+}
+
+void Logger::LogProd(int32_t level, string fileName, uint32_t lineNumber, string functionName, Variant &le) {
+	LOCK;
+	if (_pLogger == NULL)
+		return;
+
+	FOR_VECTOR(_pLogger->_logLocations, i) {
+		if (_pLogger->_logLocations[i]->EvalLogLevel(level, fileName, lineNumber,
+				functionName, le))
+			_pLogger->_logLocations[i]->Log(level, fileName,
+				lineNumber, functionName, le);
 	}
 }
 
@@ -119,6 +134,18 @@ bool Logger::AddLogLocation(BaseLogLocation *pLogLocation) {
 	LOCK;
 	if (_pLogger == NULL)
 		return false;
+	if (!pLogLocation->Init())
+		return false;
 	ADD_VECTOR_END(_pLogger->_logLocations, pLogLocation);
 	return true;
+}
+
+void Logger::SignalFork() {
+	LOCK;
+	if (_pLogger == NULL)
+		return;
+
+	FOR_VECTOR(_pLogger->_logLocations, i) {
+		_pLogger->_logLocations[i]->SignalFork();
+	}
 }

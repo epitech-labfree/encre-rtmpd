@@ -1,4 +1,4 @@
-/* 
+/*
  *  Copyright (c) 2010,
  *  Gavriloaie Eugen-Andrei (shiretu@gmail.com)
  *
@@ -112,6 +112,7 @@ public:
 	bool CreatePMT();
 	static uint32_t PeekCRC(uint8_t *pBuffer, uint32_t cursor, uint32_t maxCursor);
 	std::vector<TSStreamInfo*>& GetProgramStreamType();
+	uint32_t GetBandwidth();
 };
 
 

@@ -1,4 +1,4 @@
-/* 
+/*
  *  Copyright (c) 2010,
  *  Gavriloaie Eugen-Andrei (shiretu@gmail.com)
  *
@@ -34,53 +34,55 @@ class DLLEXP InNetTSStream
 private:
 	//audio section
 	_PIDDescriptor *_pAudioPidDescriptor;
+	int8_t _currentAudioSequenceNumber;
 	uint64_t _lastRawPtsAudio;
 	uint32_t _audioRollOverCount;
 	double _ptsTimeAudio;
 #ifdef COMPUTE_DTS_TIME
 	double _dtsTimeAudio;
 #endif
-	double _deltaTimeAudio;
-	IOBuffer _audioBuffer;
+	IOBuffer _audioBucket;
 	double _lastGotAudioTimestamp;
 	double _lastSentAudioTimestamp;
-	uint32_t _audioPacketsCount;
+	uint64_t _audioPacketsCount;
+	uint64_t _statsAudioPacketsCount;
 	uint64_t _audioBytesCount;
+	uint64_t _audioDroppedPacketsCount;
+	uint64_t _audioDroppedBytesCount;
+
 
 	//video section
 	_PIDDescriptor *_pVideoPidDescriptor;
+	int8_t _currentVideoSequenceNumber;
 	uint64_t _lastRawPtsVideo;
 	uint32_t _videoRollOverCount;
 	double _ptsTimeVideo;
 #ifdef COMPUTE_DTS_TIME
 	double _dtsTimeVideo;
 #endif
-	double _deltaTimeVideo;
-	uint32_t _videoPacketsCount;
+	uint64_t _videoPacketsCount;
 	uint64_t _videoBytesCount;
-	IOBuffer _currentNal;
+	uint64_t _videoDroppedPacketsCount;
+	uint64_t _videoDroppedBytesCount;
+	IOBuffer _videoBucket;
 
-	double _feedTime;
-
-	uint32_t _cursor;
 	StreamCapabilities _streamCapabilities;
-	bool _firstNAL;
+
+	double _deltaTime;
 
 	IOBuffer _SPS;
 	IOBuffer _PPS;
 public:
 	InNetTSStream(BaseProtocol *pProtocol, StreamsManager *pStreamsManager,
-			string name);
+			string name, uint32_t bandwidthHint);
 	virtual ~InNetTSStream();
 	virtual StreamCapabilities * GetCapabilities();
 
 	void SetAudioVideoPidDescriptors(_PIDDescriptor *pAudioPidDescriptor,
 			_PIDDescriptor *pVideoPidDescriptor);
 
-	double GetFeedTime();
-
 	bool FeedData(uint8_t *pData, uint32_t length, bool packetStart,
-			bool isAudio);
+			bool isAudio, int8_t sequenceNumber);
 	virtual bool FeedData(uint8_t *pData, uint32_t dataLength,
 			uint32_t processedLength, uint32_t totalLength,
 			double absoluteTimestamp, bool isAudio);
@@ -93,13 +95,11 @@ public:
 	virtual bool SignalResume();
 	virtual bool SignalSeek(double &absoluteTimestamp);
 	virtual bool SignalStop();
-	virtual void GetStats(Variant &info);
+	virtual void GetStats(Variant &info, uint32_t namespaceId = 0);
 private:
-	bool HandleAudioData(uint8_t *pRawBuffer, uint32_t rawBufferLength,
-			double timestamp, bool packetStart);
-	bool HandleVideoData(uint8_t *pRawBuffer, uint32_t rawBufferLength,
-			double timestamp, bool packetStart);
-	bool ProcessNal(double timestamp);
+	bool HandleAudioData();
+	bool HandleVideoData();
+	bool ProcessNal(uint8_t *pBuffer, int32_t length, double timestamp);
 	void InitializeVideoCapabilities(uint8_t *pData, uint32_t length);
 	void InitializeAudioCapabilities(uint8_t *pData, uint32_t length);
 };

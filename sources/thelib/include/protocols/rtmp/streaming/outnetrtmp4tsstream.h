@@ -1,4 +1,4 @@
-/* 
+/*
  *  Copyright (c) 2010,
  *  Gavriloaie Eugen-Andrei (shiretu@gmail.com)
  *
@@ -29,16 +29,16 @@ class DLLEXP OutNetRTMP4TSStream
 private:
 	bool _audioCodecSent;
 	bool _videoCodecSent;
-	bool _spsAvailable;
-	uint8_t *_pSPSPPS;
-	uint8_t _SPSPPSLength;
-	uint32_t _PPSStart;
 	IOBuffer _videoBuffer;
 	bool _inboundStreamIsRTP;
+	double _lastVideoTimestamp;
+	bool _isKeyFrame;
 public:
-	OutNetRTMP4TSStream(BaseProtocol *pProtocol, StreamsManager *pStreamsManager,
+	OutNetRTMP4TSStream(BaseRTMPProtocol *pProtocol, StreamsManager *pStreamsManager,
 			string name, uint32_t rtmpStreamId, uint32_t chunkSize);
 	virtual ~OutNetRTMP4TSStream();
+
+	virtual void SignalAttachedToInStream();
 
 	virtual bool IsCompatibleWithType(uint64_t type);
 
@@ -48,6 +48,8 @@ public:
 private:
 	bool FeedAudioData(uint8_t *pData, uint32_t dataLength, double absoluteTimestamp);
 	bool FeedVideoData(uint8_t *pData, uint32_t dataLength, double absoluteTimestamp);
+	bool SendVideoCodec(double absoluteTimestamp);
+	bool SendAudioCodec(double absoluteTimestamp);
 };
 
 

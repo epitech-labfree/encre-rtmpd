@@ -27,6 +27,7 @@
 
 class BaseRTMPProtocol;
 class BaseOutStream;
+class BaseOutFileStream;
 
 class DLLEXP InNetRTMPStream
 : public BaseInNetStream {
@@ -52,15 +53,14 @@ private:
 	uint64_t _videoBytesCount;
 	uint64_t _videoDroppedBytesCount;
 public:
-	InNetRTMPStream(BaseProtocol *pProtocol, StreamsManager *pStreamsManager,
-			string name, uint32_t rtmpStreamId, uint32_t chunkSize,
-			uint32_t channelId);
+	InNetRTMPStream(BaseRTMPProtocol *pProtocol, StreamsManager *pStreamsManager,
+			string name, uint32_t rtmpStreamId, uint32_t channelId);
 	virtual ~InNetRTMPStream();
 	virtual StreamCapabilities * GetCapabilities();
 
 	virtual void ReadyForSend();
 	virtual bool IsCompatibleWithType(uint64_t type);
-	virtual void GetStats(Variant &info);
+	virtual void GetStats(Variant &info, uint32_t namespaceId = 0);
 
 	uint32_t GetRTMPStreamId();
 	uint32_t GetChunkSize();
@@ -70,8 +70,7 @@ public:
 	virtual bool SendStreamMessage(string functionName, Variant &parameters,
 			bool persistent = true);
 	bool SendOnStatusStreamPublished();
-	bool RecordFLV(Variant &meta, bool append);
-	bool RecordMP4(Variant &meta);
+	bool Record(BaseOutFileStream* pOutFileStream);
 
 	virtual void SignalOutStreamAttached(BaseOutStream *pOutStream);
 	virtual void SignalOutStreamDetached(BaseOutStream *pOutStream);

@@ -26,12 +26,12 @@
 #include "protocols/rtmp/streaming/outfilertmpflvstream.h"
 #include "streaming/streamstypes.h"
 
-InNetRTMPStream::InNetRTMPStream(BaseProtocol *pProtocol,
+InNetRTMPStream::InNetRTMPStream(BaseRTMPProtocol *pProtocol,
 		StreamsManager *pStreamsManager, string name,
-		uint32_t rtmpStreamId, uint32_t chunkSize, uint32_t channelId)
+		uint32_t rtmpStreamId, uint32_t channelId)
 : BaseInNetStream(pProtocol, pStreamsManager, ST_IN_NET_RTMP, name) {
 	_rtmpStreamId = rtmpStreamId;
-	_chunkSize = chunkSize;
+	_chunkSize = pProtocol->GetInboundChunkSize();
 	_channelId = channelId;
 	_clientId = format("%d_%d_%"PRIz"u", _pProtocol->GetId(), _rtmpStreamId, (size_t)this);
 	_lastVideoTime = 0;
@@ -70,16 +70,16 @@ bool InNetRTMPStream::IsCompatibleWithType(uint64_t type) {
 			|| TAG_KIND_OF(type, ST_OUT_FILE_HLS);
 }
 
-void InNetRTMPStream::GetStats(Variant &info) {
-	BaseInNetStream::GetStats(info);
+void InNetRTMPStream::GetStats(Variant &info, uint32_t namespaceId) {
+	BaseInNetStream::GetStats(info, namespaceId);
 	info["audio"]["packetsCount"] = _audioPacketsCount;
-	info["audio"]["droppedPacketsCount"] = (uint32_t) 0;
+	info["audio"]["droppedPacketsCount"] = (uint64_t) 0;
 	info["audio"]["bytesCount"] = _audioBytesCount;
-	info["audio"]["droppedBytesCount"] = (uint32_t) 0;
+	info["audio"]["droppedBytesCount"] = (uint64_t) 0;
 	info["video"]["packetsCount"] = _videoPacketsCount;
-	info["video"]["droppedPacketsCount"] = (uint32_t) 0;
+	info["video"]["droppedPacketsCount"] = (uint64_t) 0;
 	info["video"]["bytesCount"] = _videoBytesCount;
-	info["video"]["droppedBytesCount"] = (uint32_t) 0;
+	info["video"]["droppedBytesCount"] = (uint64_t) 0;
 }
 
 uint32_t InNetRTMPStream::GetRTMPStreamId() {
@@ -108,6 +108,8 @@ bool InNetRTMPStream::SendStreamMessage(Variant &completeMessage, bool persisten
 	LinkedListNode<BaseOutStream *> *pTemp = _pOutStreams;
 	while ((pTemp != NULL) && (!IsEnqueueForDelete())) {
 		if (pTemp->info->IsEnqueueForDelete()) {
+			FINEST("IsEnqueueForDelete is true. Move ahead....");
+			pTemp = pTemp->pPrev;
 			continue;
 		}
 		if (TAG_KIND_OF(pTemp->info->GetType(), ST_OUT_NET_RTMP)) {
@@ -129,6 +131,29 @@ bool InNetRTMPStream::SendStreamMessage(Variant &completeMessage, bool persisten
 	if (persistent)
 		_lastStreamMessage = completeMessage;
 
+	if ((uint32_t) VH_MT(completeMessage) == RM_HEADER_MESSAGETYPE_NOTIFY) {
+		Variant &params = M_NOTIFY_PARAMS(completeMessage);
+		if ((params == V_MAP) && (params.MapSize() >= 2)) {
+			Variant &notify = MAP_VAL(params.begin());
+			if ((notify == V_STRING) && (lowerCase((string) notify) == "onmetadata")) {
+				Variant &metadata = MAP_VAL(++params.begin());
+				if (metadata == V_MAP) {
+					if (metadata.HasKeyChain(_V_NUMERIC, false, 1, "bandwidth")) {
+						_streamCapabilities.bandwidthHint = (uint32_t) metadata["bandwidth"];
+					} else {
+						if (metadata.HasKeyChain(_V_NUMERIC, false, 1, "audiodatarate")) {
+							_streamCapabilities.bandwidthHint =
+									(uint32_t) metadata["audiodatarate"];
+						}
+						if (metadata.HasKeyChain(_V_NUMERIC, false, 1, "videodatarate")) {
+							_streamCapabilities.bandwidthHint +=
+									(uint32_t) metadata["videodatarate"];
+						}
+					}
+				}
+			}
+		}
+	}
 	//5. Done
 	return true;
 }
@@ -162,28 +187,10 @@ bool InNetRTMPStream::SendOnStatusStreamPublished() {
 	return true;
 }
 
-bool InNetRTMPStream::RecordFLV(Variant &meta, bool append) {
-	//1. Compute the file name
-	string fileName = meta[META_SERVER_MEDIA_DIR];
-	fileName += (string) meta[META_SERVER_FILE_NAME];
-	FINEST("fileName: %s", STR(fileName));
+bool InNetRTMPStream::Record(BaseOutFileStream *pOutStream) {
 
-	//2. Delete the old file
-	if (append) {
-		WARN("append not supported yet. File will be overwritten");
-	}
-	deleteFile(fileName);
-
-	//3. Create the out file
-	_pOutFileRTMPFLVStream = new OutFileRTMPFLVStream(_pProtocol,
-			_pStreamsManager, fileName);
-
-	//4. Link it
+	_pOutFileRTMPFLVStream = pOutStream;
 	return _pOutFileRTMPFLVStream->Link(this);
-}
-
-bool InNetRTMPStream::RecordMP4(Variant &meta) {
-	NYIR;
 }
 
 void InNetRTMPStream::SignalOutStreamAttached(BaseOutStream *pOutStream) {
@@ -306,8 +313,10 @@ bool InNetRTMPStream::InitializeAudioCapabilities(uint8_t *pData, uint32_t lengt
 		FATAL("InitAudioAAC failed");
 		return false;
 	}
-	FINEST("Cached the AAC audio codec initialization: %u",
-			GETAVAILABLEBYTESCOUNT(_audioCodecInit));
+
+	//	FINEST("Cached the AAC audio codec initialization: %"PRIu32,
+	//			GETAVAILABLEBYTESCOUNT(_audioCodecInit));
+
 	return true;
 }
 
@@ -327,8 +336,8 @@ bool InNetRTMPStream::InitializeVideoCapabilities(uint8_t *pData, uint32_t lengt
 		return false;
 	}
 
-	FINEST("Cached the h264 video codec initialization: %u",
-			GETAVAILABLEBYTESCOUNT(_videoCodecInit));
+	//	FINEST("Cached the h264 video codec initialization: %u",
+	//			GETAVAILABLEBYTESCOUNT(_videoCodecInit));
 
 	return true;
 }
