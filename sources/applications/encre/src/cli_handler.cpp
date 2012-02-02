@@ -209,7 +209,7 @@ bool CLIAppProtocolHandler::ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &c
   // Meeting exists ?
   if (encre().meetings().find(cmd["meeting"]) == encre().meetings().end())
   {
-    FINEST("Meeting %s doesn't exists", STR(cmd["meeting"]));
+    FINEST("Meeting %s doesn't exists", STR(cmd["room"]));
     return false;
   }
 
