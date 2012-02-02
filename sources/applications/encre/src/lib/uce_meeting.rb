@@ -35,6 +35,7 @@ module UceMeeting
     @@request.callback {self.on_list}
 
     UceLongPoller.i.handlers["internal.meeting.add"] = Proc.new { |e| self.on_meeting_add e }
+    UceLongPoller.i.handlers["internal.meeting.delete"] = Proc.new { |e| self.on_meeting_delete e }
   end
 
   def self.on_list
@@ -51,8 +52,11 @@ module UceMeeting
   end
 
   def self.on_meeting_add(event)
-    ## FIXME update UCE since this issue has been solved upstream
-    ## Rtmpd.i.meeting_new(event["location"]) <- this field is still empty
+    Rtmpd.i.meeting_new(event["location"])
+  end
+
+  def self.on_meeting_delete(event)
+    Rtmpd.i.meeting_del(event["location"])
   end
 
   def self.on_error
