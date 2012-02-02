@@ -116,13 +116,5 @@ class Rtmpd
   def stream_record(uid, stream)
     cmd(:command => "stream.record", :uid => uid, :stream => stream)
   end
-
-  def stream_watcher_new(uid, stream, watcher_uid)
-    cmd(:command => "stream.watcher.new", :uid => uid, :stream => stream, :watcher_uid => watcher_uid)
-  end
-
-  def stream_watcher_del(uid, stream, watcher_uid)
-    cmd(:command => "stream.watcher.new", :uid => uid, :stream => stream, :watcher_uid => watcher_uid)
-  end
 end
 

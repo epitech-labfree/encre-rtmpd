@@ -56,8 +56,7 @@ module UceMeeting
   end
 
   def self.on_meeting_delete(event)
-    ## FIXME Crashes the server
-    #Rtmpd.i.meeting_del(event["location"])
+    Rtmpd.i.meeting_del(event["location"])
   end
 
   def self.on_error
