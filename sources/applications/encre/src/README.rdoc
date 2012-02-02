@@ -1,0 +1,69 @@
+== Introduction
+
+== Ucengine setup
+
+=== v 0.3.0
+
+ _deprecated_ Use 0.6.0 instead (you'll save yourself a lot of time)
+
+=== v 0.5.0
+
+You first need to create an user for the encre-video component.
+
+  ./bin/ucengine-admin user add --domain localhost --name encre-video --auth password --credential '123456'
+  ./bin/ucengine-admin role add --domain localhost --name encre-video
+  ./bin/ucengine-admin role access add --domain localhost --name encre-video --object presence --action add
+  ./bin/ucengine-admin role access add --domain localhost --name encre-video --object presence --action delete
+  ./bin/ucengine-admin role access add --domain localhost --name encre-video --object event --action list
+  ./bin/ucengine-admin role access add --domain localhost --name encre-video --object event --action get
+  ./bin/ucengine-admin role access add --domain localhost --name encre-video --object roster --action list
+  ./bin/ucengine-admin user role add --domain localhost --name encre-video --role encre-video
+
+Then, you might want to add some users to ucengine to be able to use the component, you will also need a meeting, and give some right on the meeting to these users.
+
+  ./bin/ucengine-admin meeting add --domain localhost --name 'test-meeting'
+  ./bin/ucengine-admin role add --domain localhost --name video-access
+  ./bin/ucengine-admin role access add --domain localhost --name video-access --object presence --action add
+  ./bin/ucengine-admin role access add --domain localhost --name video-access --object presence --action delete
+  ./bin/ucengine-admin role access add --domain localhost --name video-access --object 'roster' --action 'add' --meeting 'test-meeting'
+  ./bin/ucengine-admin role access add --domain localhost --name video-access --object 'roster' --action 'delete' --meeting 'test-meeting'
+  ./bin/ucengine-admin role access add --domain localhost --name video-access --object 'user' --action 'get'
+
+
+  ./bin/ucengine-admin user add --domain localhost --name toto --auth password --credential '123456'
+  ./bin/ucengine-admin user add --domain localhost --name tata --auth password --credential '123456'
+  ./bin/ucengine-admin user role add --domain localhost --name toto --role video-access
+  ./bin/ucengine-admin user role add --domain localhost --name tata --role video-access
+
+=== 0.6.0
+
+You first need to create an user for the encre-video component.
+
+  ./bin/ucengine-admin localhost user add encre-video password '123456'
+  ./bin/ucengine-admin localhost role add encre-video
+  ./bin/ucengine-admin localhost role access add encre-video add presence
+  ./bin/ucengine-admin localhost role access add encre-video delete presence
+  ./bin/ucengine-admin localhost role access add encre-video list event
+  ./bin/ucengine-admin localhost role access add encre-video get event
+  ./bin/ucengine-admin localhost role access add encre-video list roster
+  ./bin/ucengine-admin localhost user role add encre-video encre-video
+
+Then, you might want to add some users to ucengine to be able to use the component, you will also need a meeting, and give some right on the meeting to these users.
+
+  ./bin/ucengine-admin localhost meeting add 'test-meeting'
+  ./bin/ucengine-admin localhost role add video-access
+  ./bin/ucengine-admin localhost role access add video-access add presence
+  ./bin/ucengine-admin localhost role access add video-access delete presence
+  ./bin/ucengine-admin localhost role access add video-access add roster --meeting test-meeting
+  ./bin/ucengine-admin localhost role access add video-access delete roster --meeting test-meeting
+  ./bin/ucengine-admin localhost role access add video-access get user
+
+
+  ./bin/ucengine-admin localhost user add a password '123456'
+  ./bin/ucengine-admin localhost user role add a video-access
+  ./bin/ucengine-admin localhost user add b password '123456'
+  ./bin/ucengine-admin localhost user role add b video-access
+  ./bin/ucengine-admin localhost user add c password '123456'
+  ./bin/ucengine-admin localhost user role add c video-access
+  ./bin/ucengine-admin localhost user add d password '123456'
+  ./bin/ucengine-admin localhost user role add d video-access
