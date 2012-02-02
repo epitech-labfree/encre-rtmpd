@@ -45,14 +45,14 @@ class UceLongPoller
   end
 
   def new_request!
-    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event', :inactivity_timeout => 120)
+    @request = EM::HttpRequest.new(Conf.i.uce_url + '/live', :inactivity_timeout => 120)
   end
 
   def start
     if @time
       Conf.i.logger.debug "Launching poller request"
       query = @cred.merge({'type' => @handlers.keys.join(','),
-        'start' => @time, '_async' => 'lp'})
+        'start' => @time, 'mode' => 'longpolling'})
 
       @connection = @request.get :query => query, :keepalive => true
       @connection.callback {on_events}

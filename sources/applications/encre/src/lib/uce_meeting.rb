@@ -29,7 +29,7 @@ require 'json'
 
 module UceMeeting
   def self.list(u, s)
-    @@request = EM::HttpRequest.new(Conf.i.uce_url + '/meeting/all')
+    @@request = EM::HttpRequest.new(Conf.i.uce_url + '/meeting')
     @@request = @@request.get :query => {:uid => u, :sid => s}
     @@request.errback { self.on_error }
     @@request.callback {self.on_list}
