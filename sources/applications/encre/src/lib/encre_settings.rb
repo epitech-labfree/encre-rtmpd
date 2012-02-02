@@ -39,7 +39,7 @@ class Conf
       :uce_server => "localhost",
       :uce_port => 5280,
       :uce_method => "http",
-      :uce_prefix => "/api/0.5",
+      :uce_prefix => "/api/0.6",
       :uce_uid => "encre-video",
       :uce_token => "123456",
       :logfile => "STDOUT",
