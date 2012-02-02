@@ -20,6 +20,7 @@
 
 #include "rtmpappprotocolhandler.h"
 #include "cli_handler.h"
+#include "protocols/rtmp/basertmpprotocol.h"
 #include "protocols/rtmp/messagefactories/messagefactories.h"
 #include "rtmp_request.h"
 
@@ -89,6 +90,7 @@ bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom
     return false;
   }
 
+  pFrom->GetCustomParameters()["stream_name"] = r.p("stream_name");
   FINEST("ProcessInvokePublish: from %s in room '%s' (%s, %s)\n%s",
          STR(pFrom->GetCustomParameters()["uid"]),
          STR(pFrom->GetCustomParameters()["room"]),
@@ -96,7 +98,7 @@ bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom
          STR(request.ToString("", 1)));
 
   Variant cli_msg;
-  cli_msg["type"] = "publish";
+  cli_msg["type"] = "stream.publish";
   cli_msg["uid"] = pFrom->GetCustomParameters()["uid"];
   cli_msg["room"] = pFrom->GetCustomParameters()["room"];
   cli_msg["stream_name"] = r.p("stream_name");
@@ -121,5 +123,33 @@ bool        RTMPAppProtocolHandler::ProcessInvokePlay(BaseRTMPProtocol *pFrom,
   FINEST("ProcessInvokePlay: \n%s", STR(request.ToString("", 1)));
 
   return true;
+}
+
+bool        RTMPAppProtocolHandler::ProcessInvokeCloseStream(BaseRTMPProtocol *pFrom,
+                                                             Variant &request)
+{
+  FINEST("### ProcessInvokeCloseStream");
+  return BaseRTMPAppProtocolHandler::ProcessInvokeCloseStream(pFrom, request);
+}
+
+bool        RTMPAppProtocolHandler::ProcessInvokeReleaseStream(BaseRTMPProtocol *pFrom,
+                                                               Variant &request)
+{
+  FINEST("### ProcessInvokeReleaseStream");
+  return BaseRTMPAppProtocolHandler::ProcessInvokeReleaseStream(pFrom, request);
+}
+
+bool        RTMPAppProtocolHandler::ProcessInvokeDeleteStream(BaseRTMPProtocol *pFrom,
+                                                              Variant &request)
+{
+  FINEST("### ProcessInvokeDeleteStream");
+  Variant cli_msg;
+  cli_msg["type"] = "stream.delete";
+  cli_msg["uid"] = pFrom->GetCustomParameters()["uid"];
+  cli_msg["room"] = pFrom->GetCustomParameters()["room"];
+  cli_msg["stream_name"] = pFrom->GetCustomParameters()["stream_name"];
+  encre().cli().SendControllerMessage(cli_msg);
+
+  return BaseRTMPAppProtocolHandler::ProcessInvokeDeleteStream(pFrom, request);
 }
 

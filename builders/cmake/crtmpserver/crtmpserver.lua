@@ -86,13 +86,13 @@ configuration=
 					port=1935,
 					protocol="inboundRtmp"
 				},
-				{
-					ip="0.0.0.0",
-					port=8081,
-					protocol="inboundRtmps",
-					sslKey="server.key",
-					sslCert="server.crt"
-				},
+				-- {
+				-- 	ip="0.0.0.0",
+				-- 	port=8081,
+				-- 	protocol="inboundRtmps",
+				-- 	sslKey="server.key",
+				-- 	sslCert="server.crt"
+				-- },
 				{
 					ip="0.0.0.0",
 					port=8080,
@@ -213,25 +213,6 @@ configuration=
 			},
 			numberOfConnections=10,
 			randomAccessStreams=false
-		},
-		{
-			name="applestreamingclient",
-			description="Apple Streaming Client",
-			protocol="dynamiclinklibrary",
-			--[[acceptors =
-			{
-				{
-					ip="0.0.0.0",
-					port=5544,
-					protocol="inboundRtsp"
-				}
-			},]]--
-			aliases=
-			{
-				"asc",
-			},
-			--validateHandshake=true,
-			--default=true,
 		},
 		--[[{
 			name="vmapp",

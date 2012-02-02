@@ -179,22 +179,19 @@ bool CLIAppProtocolHandler::ProcessInvokeUserNew(BaseProtocol *pFrom, Variant &c
   }
 
   // Meeting exists ?
-  if (encre().meetings().find(cmd["meeting"]) == encre().meetings().end())
+  if (encre().meetings().find(cmd["room"]) == encre().meetings().end())
   {
-    FINEST("Meeting %s doesn't exists", STR(cmd["meeting"]));
+    FINEST("Meeting %s doesn't exists", STR(cmd["room"]));
     return false;
   }
 
-  if (encre().meetings()[cmd["meeting"]].exists(cmd["uid"]))
-  {
-    FINEST("User already exists.");
-    return true;
-  }
+  if (encre().meetings()[cmd["room"]].exists(cmd["uid"]))
+    FINEST("User already exists, replacing access token (old session invalidated)");
 
-  user new_user(cmd["uid"], cmd["token"], cmd["meeting"]);
-  encre().meetings()[cmd["meeting"]][cmd["uid"]] = new_user;
+  user new_user(cmd["uid"], cmd["token"], cmd["room"]);
+  encre().meetings()[cmd["room"]][cmd["uid"]] = new_user;
 
-  FINEST("Creating new user (%s, %s) in meeting %s",
+  FINEST("Creating new user (%s, %s) in room %s",
          STR(cmd["uid"]), STR(cmd["token"]), STR(cmd["room"]));
 
   return true;

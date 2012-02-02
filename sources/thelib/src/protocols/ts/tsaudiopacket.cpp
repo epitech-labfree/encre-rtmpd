@@ -79,6 +79,7 @@ bool TSAudioPacket::CreatePacket(uint8_t* pData, uint32_t dataLength) {
 
 	uint32_t findPacketNumber = 0;
 	findPacketNumber = (dataLength + 19) / 184 + 1;
+        findPacketNumber = findPacketNumber; // FIXME Ugly NOP to Disable compilation error
 
 	// 4. Send the PES
 	uint64_t pts = getDate() - 2000;

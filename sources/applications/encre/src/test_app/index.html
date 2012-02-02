@@ -5,21 +5,59 @@
 </head>
 <body>
   <script src="jquery-1.7.1.js"></script>
+  <script src="jquery-ui-1.8.17.js"></script>
   <script src="uce.js"></script>
+  <script src="ucewidget.js"></script>
   <script src="coffee-script.js"></script>
   <script type="text/coffeescript" src="test_app.coffee"></script>
+  <script type="text/coffeescript" src="video_widget.coffee"></script>
   <!-- <script src="test_app.js"></script> -->
 
   <div id="content" class="box">
+
+    <!-- The login form -->
     <div id="login_box" class="box">
-      <form action="javascript:login_submit();">
+      <form action="javascript:login_submit();" id="login_form">
         Login: <input type="text" name="uid" value="toto"/><br/>
-        Pass: <input type="password" name="credential" value="123456"/><br/>
-        Room: <input type="text" name="meeting" value="test-meeting"/><br/>
+        Pass: <input type="password" name="credential"
+                     value="123456"/><br/>
+        Room: <input type="text" name="meeting"
+                     value="test-meeting"/><br/>
         <input type="submit" value="Let me in..."/>
       </form>
     </div>
+
+    <!-- Connected user box -->
+    <div id="user_box" class="box">
+    </div>
+
+    <!-- Video Widgets Boxes -->
+    <div id="video_box" class="box">
+      <div id="video_column_left" class="column box">
+        PlaceHolder
+	<!-- <div class="portlet"> -->
+	<!-- 	<div class="portlet-header">Feeds</div> -->
+	<!-- 	<div class="portlet-content"> -->
+        <!--           Lorem ipsum dolor sit amet, -->
+        <!--           consectetuer adipiscing elit</div> -->
+	<!-- </div> -->
+
+	<!-- <div class="portlet"> -->
+	<!-- 	<div class="portlet-header">News</div> -->
+	<!-- 	<div class="portlet-content"> -->
+        <!--           Lorem ipsum dolor sit amet, -->
+        <!--           consectetuer adipiscing elit</div> -->
+	<!-- </div> -->
+
+      </div>
+      <div id="video_column_right" class="column box">
+        PlaceHolder
+      </div>
+    </div>
+
   </div>
+
+  <!-- Event log box -->
   <div id="event_box" class="box">
     <ul id="event_log">
     </ul>

@@ -50,17 +50,23 @@ $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
 # end
 
 def rtmpd_event_handler(e)
-  if e["data"]["type"] == "publish"
+  if e["data"]["type"] == "stream.publish"
     UceEvent.i.ev_stream_started({ :metadata => { :user_uid => e["data"]["uid"],
                                      :room => e["data"]["room"],
                                      :name => e["data"]["stream_name"]}},
                                  e["data"]["room"])
-
+    Conf.i.logger.warn "ev_stream_started #{e}"
+  elsif e["data"]["type"] == "stream.delete"
+    UceEvent.i.ev_stream_stopped({ :metadata => { :user_uid => e["data"]["uid"],
+                                     :room => e["data"]["room"],
+                                     :name => e["data"]["stream_name"]}},
+                                 e["data"]["room"])
+    Conf.i.logger.warn "ev_stream_stopped #{e}"
   end
 end
 
 UceLongPoller.i.handlers["internal.roster.add"] = Proc.new do |event|
-  puts "Receiving internal.roster.add (#{event["from"]})"
+  Conf.i.logger.debug "Receiving internal.roster.add (#{event["from"]})"
   token = TokenGenerator.generate(event["from"])
   Rtmpd.i.user_new event["from"], token, event["location"]
   UceEvent.i.ev_token({:to => event["from"], :metadata => {:token => token}},
@@ -68,7 +74,7 @@ UceLongPoller.i.handlers["internal.roster.add"] = Proc.new do |event|
 end
 
 UceLongPoller.i.handlers["internal.roster.delete"] = Proc.new do |event|
-  puts "Receiving internal.roster.delete (#{event["from"]})"
+  Conf.i.logger.debug "Receiving internal.roster.delete (#{event["from"]})"
 
   Rtmpd.i.user_del event["from"], event["location"]
 end

@@ -997,7 +997,7 @@ bool BaseRTMPAppProtocolHandler::ProcessInvokePauseRaw(BaseRTMPProtocol *pFrom,
 		//4. Pause it
 		return pBaseOutNetRTMPStream->Pause();
 	} else {
-		double timeOffset = 0.0;
+		timeOffset = 0.0;
 		if (M_INVOKE_PARAM(request, 2) == _V_NUMERIC)
 			timeOffset = M_INVOKE_PARAM(request, 2);
 

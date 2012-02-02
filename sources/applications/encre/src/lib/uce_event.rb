@@ -81,7 +81,7 @@ class UceEvent
   end
 
   def on_response(pipe, type, metadata)
-    puts "UceEvent.send_event success (#{pipe.response_header.status}))"
+    puts "UceEvent.send_event (with type '#{type}') success (#{pipe.response_header.status}))"
     # send_event(type, metadata)
   end
 

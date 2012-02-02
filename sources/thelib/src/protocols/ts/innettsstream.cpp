@@ -250,6 +250,9 @@ bool InNetTSStream::FeedData(uint8_t *pData, uint32_t length, bool packetStart,
 	else
 		_videoBucket.ReadFromBuffer(pData, length);
 	return true;
+
+        // FIXME Disable compile error;
+        return absoluteTime;
 }
 
 bool InNetTSStream::FeedData(uint8_t *pData, uint32_t dataLength,

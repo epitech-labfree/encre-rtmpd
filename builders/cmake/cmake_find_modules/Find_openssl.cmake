@@ -1,4 +1,4 @@
-FIND_PATH(OPENSSL_INCLUDE_PATH 
+FIND_PATH(OPENSSL_INCLUDE_PATH
 	NAMES
 		openssl/ssl.h
 	PATHS
@@ -26,6 +26,7 @@ FIND_LIBRARY(OPENSSL_LIBRARY_PATH
 		/sw/lib
 		/usr/local/ssl/lib
 		/lib
+                /usr/lib/x86_64-linux-gnu/
 		NO_DEFAULT_PATH)
 
 FIND_LIBRARY(CRYPTO_LIBRARY_PATH
@@ -40,6 +41,7 @@ FIND_LIBRARY(CRYPTO_LIBRARY_PATH
 		/sw/lib
 		/usr/local/ssl/lib
 		/lib
+                /usr/lib/x86_64-linux-gnu/
 		NO_DEFAULT_PATH)
 
 IF($ENV{COMPILE_STATIC} MATCHES "1")

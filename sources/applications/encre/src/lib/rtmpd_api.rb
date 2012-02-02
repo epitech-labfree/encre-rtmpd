@@ -36,6 +36,7 @@ class RtmpdConnection < EM::Connection
     @buffer = String.new
     @message_callback = nil
     Rtmpd.i.send = Proc.new { |data| send_data data }
+    Conf.i.logger.warn "Connected to Rtmpd"
     #send_data({:command => "nothinh", :test => 23}.to_json.to_s + "\n")
   end
 
@@ -84,7 +85,7 @@ class Rtmpd
   end
 
   def user_new(uid, token, room)
-    cmd(:command => "user.new", :uid => uid, :sid => token, :room => room)
+    cmd(:command => "user.new", :uid => uid, :token => token, :room => room)
   end
 
   def user_del(uid, room)

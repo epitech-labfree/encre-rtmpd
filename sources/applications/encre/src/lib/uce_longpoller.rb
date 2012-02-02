@@ -33,29 +33,32 @@ class UceLongPoller
   attr_accessor :types, :handlers
 
   def initialize
-    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event')
+    new_request!
     @connection = nil
     @last_time = nil
     @handlers = {}
     @cred = {}
-
-    @types = [] # 'internal.meeting.add'
-            #]
   end
 
   def self.i
     self.instance
   end
 
+  def new_request!
+    @request = EM::HttpRequest.new(Conf.i.uce_url + '/event', :inactivity_timeout => 120)
+  end
+
   def start
     if @time
-      #Conf.i.logger.debug "Launching poller request"
-      query = @cred.merge({'type' => @types.join(','),
+      Conf.i.logger.debug "Launching poller request"
+      query = @cred.merge({'type' => @handlers.keys.join(','),
         'start' => @time, '_async' => 'lp'})
 
-      @connection = @request.get :query => query, :inactivity_timeout => 0
+      @connection = @request.get :query => query, :keepalive => true
       @connection.callback {on_events}
-      @connection.errback do |error|
+      @connection.errback do |client|
+        Conf.i.logger.warn "LP Request error : #{client.error}. Object.inspect: #{client.inspect}\n\t===> Creating new EM::HttpRequest"
+        new_request!
         EM::Timer.new(1) { start }
       end
     else
@@ -71,10 +74,11 @@ class UceLongPoller
     else
       r = JSON.parse @connection.response
       r['result'].each do |event|
+        Conf.i.logger.debug "LP Request, dumping raw event #{event}"
         if @handlers.has_key? event["type"]
           h = @handlers[event["type"]]
           if h.respond_to? :each
-            h.each { |p| p.call event }
+            h.each { |p| p.call event if p.respond_to? :call}
           elsif h.respond_to? :call
             h.call event
           else
@@ -84,6 +88,7 @@ class UceLongPoller
           puts "Received an unhandled event : #{event}"
         end
         @time = event['datetime'].to_i + 1 if event['datetime'] >= @time
+        Conf.i.logger.debug "New time is #{@time}"
       end
     end
     start

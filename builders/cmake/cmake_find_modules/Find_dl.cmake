@@ -1,5 +1,5 @@
 MESSAGE(STATUS "Looking for dl")
-FIND_PATH(DL_INCLUDE_PATH 
+FIND_PATH(DL_INCLUDE_PATH
 	NAMES
 		dlfcn.h
 	PATHS
@@ -21,7 +21,6 @@ FIND_LIBRARY(DL_LIBRARY_PATH
 		/usr/local/lib
 		/sw/lib
 		/opt/local/lib
-		/lib/i386-linux-gnu/
 		NO_DEFAULT_PATH)
 
 MESSAGE("DL_LIBRARY_PATH: ${DL_LIBRARY_PATH}")

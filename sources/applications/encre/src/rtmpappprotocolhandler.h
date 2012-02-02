@@ -49,6 +49,12 @@ namespace app_encre {
                                              Variant &request);
     virtual bool        ProcessInvokePlay(BaseRTMPProtocol *pFrom,
                                           Variant &request);
+    virtual bool        ProcessInvokeCloseStream(BaseRTMPProtocol *pFrom,
+                                          Variant &request);
+    virtual bool        ProcessInvokeReleaseStream(BaseRTMPProtocol *pFrom,
+                                          Variant &request);
+    virtual bool        ProcessInvokeDeleteStream(BaseRTMPProtocol *pFrom,
+                                          Variant &request);
   };
 }
 #endif	/* _RTMPAPPPROTOCOLHANDLER_H */

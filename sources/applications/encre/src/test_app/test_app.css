@@ -14,6 +14,7 @@
 {
     border-style: dotted;
     border-width: 2px;
+    padding: 1px;
 }
 
 #event_log
@@ -39,11 +40,61 @@
     width: 66%;
 }
 
+#user_box
+{
+    width: 30%;
+    display:none;
+}
+
 #login_box
 {
-    position: relative;
-    top: 0px;
-    left: 0px;
     width: 30%;
 }
+
+#video_box
+{
+    /* position: relative; */
+    /* top: 0px; */
+    /* /\* left: 0px; *\/ */
+    /* height: 100px; */
+}
+
+/* This next shit is about video widget positioning */
+.column {
+    width: 49%;
+    padding-bottom: 100px;
+    float: left;
+    /* position: absolute; */
+    /* top: 0px; */
+
+}
+#video_column_left {
+    left: 0%;
+}
+#video_column_right {
+    left: 50%;
+}
+.portlet {
+    margin: 0 1em 1em 0;
+}
+.portlet-header {
+    margin: 0.3em;
+    padding-bottom: 4px;
+    padding-left: 0.2em;
+}
+.portlet-header .ui-icon {
+    float: right;
+}
+.portlet-content {
+    padding: 0.4em;
+}
+.ui-sortable-placeholder {
+    border: 1px dotted black;
+    visibility: visible !important;
+    height: 50px !important;
+}
+.ui-sortable-placeholder * {
+    visibility: hidden;
+}
+
 
