@@ -2,7 +2,7 @@
 
 == Requirements
 === Ruby gems
- - event-machine
+ - eventmachine
  - em-http-request
  - json
  - rest-client (optional)
