@@ -1,5 +1,12 @@
 == Introduction
 
+== Requirements
+=== Ruby gems
+ - event-machine
+ - em-http-request
+ - json
+ - rest-client (optional)
+
 == Ucengine setup
 
 === v 0.3.0
