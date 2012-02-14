@@ -81,15 +81,11 @@ bool CLIAppProtocolHandler::ProcessMessage(BaseProtocol *pFrom, Variant &message
   FINEST("Encre: Received JsonCLI message %s\n%s", STR(json), STR(cmd.ToString()));
 
   if (ProcessInvokeCommand(pFrom, cmd))
-  {
     SendSuccess(pFrom, "{\"result\":\"ok\"}", cmd);
-    return true;
-  }
   else
-  {
     SendFail(pFrom, "{\"result\":\"nok\"}");
-    return false;
-  }
+
+  return true;
 }
 
 bool CLIAppProtocolHandler::SendControllerMessage(Variant &data)
