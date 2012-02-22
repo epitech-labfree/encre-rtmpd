@@ -1,11 +1,28 @@
 == Introduction
 
+encre-rtmpd is a version of crtmpserver (http://www.rtmpd.com) server, including an UCEngine-enabled application. It allows you to write UCEngine application with rtmp streaming. It notifies via UCE your client when new stream are pusblished or when they are stopped, and use UCE to check wether a client has the right to publish or to play streams.
+
+=== UCEngine
+
+UCEngine is a fast Pubsub server with persistence and replay written in Erlang by AF83 (www.af83.com), initally for the ENCRE project, a french government-funded project labeled by Cap-Digital competitivity cluster
+
 == Requirements
 === Ruby gems
- - eventmachine
- - em-http-request
- - json
- - rest-client (optional)
+ - ruby 1.9.x with dev headers/tools (untested with 1.8.x) and rubygems, i suggest you use rvm
+ - bundler gem (gem install bundler)
+ - Automatically fetch and install dependancies: cd sources/applications/encre/src && bundle install
+=== System packages (dedian)
+ - build-essential
+ - cmake
+ - libopenssl-dev
+ - libboost-all-dev
+ - ucengine (if there isn't a package for your distribution yet, go to www.ucengine.org > Documentation > installation)
+
+== Install
+
+  $> ./cleanup.sh
+  $> cd builders/cmake && cmake . && ./run
+  $> cd sources/applications/encre/src/ && bundle install && ./uce-connector.rb
 
 == Ucengine setup
 

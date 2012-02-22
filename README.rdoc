@@ -1,0 +1,1 @@
+sources/applications/encre/src/README.rdoc
