@@ -209,7 +209,7 @@ bool CLIAppProtocolHandler::ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &c
     return false;
   }
 
-  if (encre().meetings()[cmd["room"]].exists(cmd["uid"]))
+  if (!(encre().meetings()[cmd["room"]].exists(cmd["uid"])))
   {
     FINEST("User doesn't exist.");
     return false;
