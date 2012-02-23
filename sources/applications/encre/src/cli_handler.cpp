@@ -113,18 +113,10 @@ bool CLIAppProtocolHandler::ProcessInvokeCommand(BaseProtocol *pFrom, Variant &c
     return ProcessInvokeMeetingNew(pFrom, command);
   else if (cmd == "meeting.del")
     return ProcessInvokeMeetingDel(pFrom, command);
-  else if (cmd == "stream.new")
-    return ProcessInvokeStreamNew(pFrom, command);
-  else if (cmd == "stream.del")
-    return ProcessInvokeStreamDel(pFrom, command);
   else if (cmd == "stream.mute")
     return ProcessInvokeStreamMute(pFrom, command);
   else if (cmd == "stream.record")
     return ProcessInvokeStreamRecord(pFrom, command);
-  else if (cmd == "stream.watcher.new")
-    return ProcessInvokeStreamWatcherNew(pFrom, command);
-  else if (cmd == "stream.watcher.del")
-    return ProcessInvokeStreamWatcherDel(pFrom, command);
   else
     return false;
 }
@@ -221,32 +213,12 @@ bool CLIAppProtocolHandler::ProcessInvokeUserDel(BaseProtocol *pFrom, Variant &c
   return true;
 }
 
-bool CLIAppProtocolHandler::ProcessInvokeStreamNew(BaseProtocol *pFrom, Variant &command)
-{
-  return true;
-}
-
-bool CLIAppProtocolHandler::ProcessInvokeStreamDel(BaseProtocol *pFrom, Variant &command)
-{
-  return true;
-}
-
 bool CLIAppProtocolHandler::ProcessInvokeStreamMute(BaseProtocol *pFrom, Variant &command)
 {
   return true;
 }
 
 bool CLIAppProtocolHandler::ProcessInvokeStreamRecord(BaseProtocol *pFrom, Variant &command)
-{
-  return true;
-}
-
-bool CLIAppProtocolHandler::ProcessInvokeStreamWatcherNew(BaseProtocol *pFrom, Variant &command)
-{
-  return true;
-}
-
-bool CLIAppProtocolHandler::ProcessInvokeStreamWatcherDel(BaseProtocol *pFrom, Variant &command)
 {
   return true;
 }

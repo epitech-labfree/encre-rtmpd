@@ -126,11 +126,43 @@ describe Rtmpd do
       end
     end
 
+    it "updates user token (and maybe warn) when the user and meeting already exist" do
+      10.times do |i|
+        10.times do |j|
+          Rtmpd.i.user_new "test_#{i}", rand(999999).to_s, "test_#{j}"
+          get_res['status'].should == "SUCCESS"
+          closed?.should be_false
+        end
+      end
+    end
+  end
+
+  context "user.del" do
     it "deletes user when the meeting and the user exist" do
       10.times do |i|
         10.times do |j|
           Rtmpd.i.user_del "test_#{i}", "test_#{j}"
           get_res['status'].should == "SUCCESS"
+          closed?.should be_false
+        end
+      end
+    end
+
+    it "refuses to delete user when the user doesn't exists in the room" do
+      10.times do |i|
+        10.times do |j|
+          Rtmpd.i.user_del "test_#{i}", "test_#{j}"
+          get_res['status'].should == "FAIL"
+          closed?.should be_false
+        end
+      end
+    end
+
+    it "refuses to delete user when the room doesn't exist" do
+      10.times do |i|
+        10.times do |j|
+          Rtmpd.i.user_del "test_#{rand(9999) * 1000}", "test_#{rand(9999) * 1000}"
+          get_res['status'].should == "FAIL"
           closed?.should be_false
         end
       end
