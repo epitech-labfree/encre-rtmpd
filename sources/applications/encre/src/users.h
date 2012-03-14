@@ -126,6 +126,11 @@ class meeting : public map<std::string, user>, public has_properties
 
 class meeting_map : public map<std::string, meeting>
 {
+public:
+  bool          exists(std::string meeting)
+  {
+    return find(meeting) != end();
+  }
 };
 
 class stream_map : public map<std::string, stream>

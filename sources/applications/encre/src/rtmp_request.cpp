@@ -68,7 +68,7 @@ namespace app_encre
     {
       result = STR(AT(AT(m_request, 1), 0));
     }
-    else if (param == "sid")
+    else if (param == "token")
     {
       result = STR(AT(AT(m_request, 1), 1));
     }

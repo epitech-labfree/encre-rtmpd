@@ -60,9 +60,10 @@ def closed?
 end
 
 describe Rtmpd do
+  meetings = []
+  5.times { meetings.push rand(999999999999).to_s }
+
   context "meeting.new" do
-    meetings = []
-    5.times { meetings.push rand(999999999999).to_s }
     it "allows meeting creation" do
       meetings.each do |m|
         Rtmpd.i.meeting_new m
@@ -80,7 +81,9 @@ describe Rtmpd do
         closed?.should be_false
       end
     end
+  end
 
+  context "meeting.del" do
     it "allows existant meeting destruction" do
       meetings.each do |m|
         Rtmpd.i.meeting_del m

@@ -54,26 +54,28 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
     return false;
   }
 
-  FINEST("ProcessInvokeConnect (uid, sid) in room = (%s, %s) in [%s]",
-         STR(r.p("uid")), STR(r.p("sid")), STR(r.p("room")));
+  FINEST("ProcessInvokeConnect (uid, token) in room = (%s, %s) in [%s]",
+         STR(r.p("uid")), STR(r.p("token")), STR(r.p("room")));
 
-  //if (encre().users().exists(uid) && encre().users()[uid].properties()["sid"] == sid)
+  if (encre().meetings().exists(r.p("room"))
+      && encre().meetings()[r.p("room")].exists(r.p("uid"))
+      && encre().meetings()[r.p("room")][r.p("uid")].properties()["token"] == r.p("token"))
   {
+//    Variant msg("Client connection has been authorized");
+
     FINEST("User authenticated");
-    // FIXME I'm working on this. LEAK
-    encre().cli().SendControllerMessage(*(new Variant("Client is connected, test message")));
+//    encre().cli().SendControllerMessage(msg);
 
     pFrom->GetCustomParameters()["uid"] = r.p("uid");
-    pFrom->GetCustomParameters()["sid"] = r.p("sid");
+    pFrom->GetCustomParameters()["token"] = r.p("token");
     pFrom->GetCustomParameters()["room"] = r.p("room");
-    return true;
   }
-  // else
-  // {
-  //   FINEST("User isn't allowed to connect (yet)");
-  //   pFrom->GracefullyEnqueueForDelete();
-  //   return false;
-  // }
+  else
+  {
+    FINEST("User isn't allowed to connect (yet)");
+    pFrom->GracefullyEnqueueForDelete();
+  }
+  return true;
 }
 
 bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
