@@ -69,13 +69,14 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
     pFrom->GetCustomParameters()["uid"] = r.p("uid");
     pFrom->GetCustomParameters()["token"] = r.p("token");
     pFrom->GetCustomParameters()["room"] = r.p("room");
+    return true;
   }
   else
   {
     FINEST("User isn't allowed to connect (yet)");
     pFrom->GracefullyEnqueueForDelete();
+    return false;
   }
-  return true;
 }
 
 bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom,
