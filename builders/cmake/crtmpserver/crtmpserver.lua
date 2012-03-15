@@ -63,7 +63,7 @@ configuration=
 			-- this is the folder from where the current application gets it's content.
 			-- It is optional. If not specified, it will be defaulted to:
 			-- <rootDirectory>/<name>/mediaFolder
-			-- mediaFolder="/some/directory/where/media/files/are/stored"
+			-- mediaFolder="/tmp/encre"
 			-- the application will also be known by that names. It is optional
 			aliases=
 			{

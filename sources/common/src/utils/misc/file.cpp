@@ -464,8 +464,8 @@ bool File::WriteBuffer(const uint8_t *pBuffer, uint64_t count) {
 		FATAL("File not opened");
 		return false;
 	}
-	if (fwrite(pBuffer, count, 1, _pFile) != 1) {
-		FATAL("Unable to write %"PRIu64" bytes to file", count);
+	if (fwrite(pBuffer, count, 1, _pFile) != 1 && count != 0) {
+		FATAL("Unable to write %"PRIu64" bytes to file (%s)", count, strerror(errno));
 		return false;
 	}
 
