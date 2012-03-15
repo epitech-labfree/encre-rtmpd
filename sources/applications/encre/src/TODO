@@ -1,0 +1,9 @@
+#
+# TODO file for encre-rtmpd
+#
+
+# Add randomness into stream name when recording
+# Handle stream_started loop when client isn't allowed to
+  connect. Rtmpd seems to execute ProcessInvokePublish even if we
+  refused ProcessEventConnect
+

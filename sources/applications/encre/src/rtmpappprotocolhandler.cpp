@@ -74,7 +74,7 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
   else
   {
     FINEST("User isn't allowed to connect (yet)");
-    pFrom->GracefullyEnqueueForDelete();
+    pFrom->EnqueueForDelete();
     return false;
   }
 }

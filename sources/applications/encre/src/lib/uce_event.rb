@@ -85,7 +85,7 @@ class UceEvent
     # send_event(type, metadata)
   end
 
-  def event(type, data, room = nil)
+  def event(type, data = {}, room = nil)
     meta = data.flatten_for_query
     query = @cred.merge({'type' => type}).merge(meta)
     @request = EM::HttpRequest.new(Conf.i.uce_url + '/event/' + room.to_s)
