@@ -50,7 +50,7 @@ $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
 # end
 
 def rtmpd_event_handler(e)
-  # FIXME Standardize result from UCE (i.e. SenFailt ("result" => "nok"))
+  # FIXME Standardize result from UCE (i.e. SenFail ("result" => "nok"))
   return unless e.has_key? "data"
 
   if e["data"]["type"] == "stream.publish"

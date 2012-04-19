@@ -69,6 +69,7 @@ bool        RTMPAppProtocolHandler::ProcessInvokeConnect(BaseRTMPProtocol *pFrom
     pFrom->GetCustomParameters()["uid"] = r.p("uid");
     pFrom->GetCustomParameters()["token"] = r.p("token");
     pFrom->GetCustomParameters()["room"] = r.p("room");
+    pFrom->GetCustomParameters()["publish"] = false;
     return true;
   }
   else
@@ -106,6 +107,8 @@ bool        RTMPAppProtocolHandler::ProcessInvokePublish(BaseRTMPProtocol *pFrom
   cli_msg["room"] = pFrom->GetCustomParameters()["room"];
   cli_msg["stream_name"] = r.p("stream_name");
   encre().cli().SendControllerMessage(cli_msg);
+
+  pFrom->GetCustomParameters()["publish"] = true;
 
   return true;
 }
@@ -145,13 +148,16 @@ bool        RTMPAppProtocolHandler::ProcessInvokeReleaseStream(BaseRTMPProtocol 
 bool        RTMPAppProtocolHandler::ProcessInvokeDeleteStream(BaseRTMPProtocol *pFrom,
                                                               Variant &request)
 {
-  FINEST("### ProcessInvokeDeleteStream");
-  Variant cli_msg;
-  cli_msg["type"] = "stream.delete";
-  cli_msg["uid"] = pFrom->GetCustomParameters()["uid"];
-  cli_msg["room"] = pFrom->GetCustomParameters()["room"];
-  cli_msg["stream_name"] = pFrom->GetCustomParameters()["stream_name"];
-  encre().cli().SendControllerMessage(cli_msg);
+  if (pFrom->GetCustomParameters()["publish"])
+  {
+    FINEST("### ProcessInvokeDeleteStream");
+    Variant cli_msg;
+    cli_msg["type"] = "stream.delete";
+    cli_msg["uid"] = pFrom->GetCustomParameters()["uid"];
+    cli_msg["room"] = pFrom->GetCustomParameters()["room"];
+    cli_msg["stream_name"] = pFrom->GetCustomParameters()["stream_name"];
+    encre().cli().SendControllerMessage(cli_msg);
+  }
 
   return BaseRTMPAppProtocolHandler::ProcessInvokeDeleteStream(pFrom, request);
 }
