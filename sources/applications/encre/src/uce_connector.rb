@@ -64,6 +64,7 @@ def rtmpd_event_handler(e)
                                      :room => e["data"]["room"],
                                      :name => e["data"]["stream_name"]}},
                                  e["data"]["room"])
+    UceEvent.i.upload(Conf.i.rtmpd_record_path + e["data"]["stream_name"] + ".flv", e["data"]["room"])
     Conf.i.logger.warn "ev_stream_stopped #{e}"
   end
 end

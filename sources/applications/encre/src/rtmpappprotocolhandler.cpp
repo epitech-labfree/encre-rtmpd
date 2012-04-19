@@ -155,4 +155,3 @@ bool        RTMPAppProtocolHandler::ProcessInvokeDeleteStream(BaseRTMPProtocol *
 
   return BaseRTMPAppProtocolHandler::ProcessInvokeDeleteStream(pFrom, request);
 }
-

@@ -26,6 +26,7 @@
 require 'eventmachine'
 require 'singleton'
 require 'em-http'
+require 'rest_client'
 
 class Hash
   def __context_to_string(c)
@@ -92,6 +93,14 @@ class UceEvent
     pipe = @request.post :query => query
     pipe.errback { on_error type, data }
     pipe.callback { on_response pipe, type, data }
+  end
+
+  def upload(path, room = nil)
+    query = Conf.i.uce_url + '/file/' + room.to_s
+    query += "?uid=#{@cred[:uid]}&sid=#{@cred[:sid]}"
+    Thread.new do
+      RestClient.post query, :content => File.new(path), :ev15 => "pwetpwet"
+    end
   end
 
    def method_missing(sym, *args)

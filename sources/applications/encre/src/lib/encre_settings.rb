@@ -36,6 +36,7 @@ class Conf
     @options = {
       :rtmpd_server => "localhost",
       :rtmpd_port => 2342,
+      :rtmpd_record_path => "/path/to/encre/rtmpdapp/media/folder",
       :uce_server => "localhost",
       :uce_port => 5280,
       :uce_method => "http",
