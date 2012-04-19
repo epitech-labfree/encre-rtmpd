@@ -51,7 +51,7 @@ $log.warn "Encre rtmpd <-> ucengine connector starting up ..."
 
 def rtmpd_event_handler(e)
   # FIXME Standardize result from UCE (i.e. SenFail ("result" => "nok"))
-  return unless e.has_key? "data"
+  return unless e.has_key? "data" and not e["data"].nil?
 
   if e["data"]["type"] == "stream.publish"
     UceEvent.i.ev_stream_started({ :metadata => { :user_uid => e["data"]["uid"],
